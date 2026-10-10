@@ -1,0 +1,30 @@
+services:
+  # Development services
+  postgres:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: civicloop
+      POSTGRES_PASSWORD: "yZZ0PRndvUiD2kAcb2pZ-xSo5ITFIVPw"
+    volumes:
+      - civicloop_data:/var/lib/postgresql/data
+
+
+  # Test services
+  postgres_test:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: civicloop_test
+      POSTGRES_PASSWORD: "QlvhP8Q77YMa8rej4ECc-ruaR7B80XKM"
+    volumes:
+      - civicloop_test_data:/var/lib/postgresql/data
+
+
+volumes:
+  civicloop_data:
+  civicloop_test_data:
