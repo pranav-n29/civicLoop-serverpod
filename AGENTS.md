@@ -47,4 +47,13 @@ If the user asks you to test the app:
 
 The app is launched from `civicloop_flutter/lib/driver.dart`, which starts the Flutter driver extension with text entry emulation turned off so the app stays usable by hand. To let the driver type, set `enableTextEntryEmulation: true` there and `hot_restart` the app.
 
-IMPORTANT: After building the first version of the app, update this AGENTS.md file with information about the app we're building. KEEP the info about the MCP server and the checklist. Remove this paragraph.
+## App-specific notes
+
+- The Flutter entry point is `civicloop_flutter/lib/main.dart`.
+- The Citizen Home presentation and demo interactions live in
+  `civicloop_flutter/lib/screens/citizen_home_screen.dart`.
+- The report form remains in `main.dart` and routes to
+  `screens/ai_analysis_screen.dart`; preserve that flow when changing home
+  navigation.
+- Home pulse statistics, location, notifications, and issue cards are
+  explicitly demo UI until backend endpoints are connected.
