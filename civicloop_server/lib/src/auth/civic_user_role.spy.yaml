@@ -1,0 +1,15 @@
+class: CivicUserRole
+table: civic_user_role
+fields:
+  userId: String
+  email: String?
+  fullName: String?
+  role: String
+  department: String?
+  isActive: bool
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  civic_user_role_user_id_unique_idx:
+    fields: userId
+    unique: true

@@ -4,6 +4,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
+import 'src/auth/dev_provisioning.dart';
 import 'src/cache_busting.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
@@ -102,4 +103,16 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // In development mode, safely provision / sync local test accounts
+  // (Admin & Field Worker) so they are immediately available for verification.
+  if (pod.runMode == ServerpodRunMode.development) {
+    try {
+      await pod.withSession((session) async {
+        await DevProvisioning.provision(session);
+      });
+    } catch (e, st) {
+      stderr.writeln('Warning: Failed to provision dev users: $e\n$st');
+    }
+  }
 }

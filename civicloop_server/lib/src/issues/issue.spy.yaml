@@ -1,0 +1,28 @@
+class: Issue
+table: civic_issue
+fields:
+  title: String
+  description: String
+  category: String
+  status: String
+  createdAt: DateTime
+  latitude: double?
+  longitude: double?
+  userId: String?
+  photoPath: String?
+  priority: String?
+  department: String?
+  assignedEmployeeId: String?
+  assignedEmployeeName: String?
+  assignedAt: DateTime?
+  dueDate: DateTime?
+  progressNotes: String?
+  completionNotes: String?
+  completionPhotoPath: String?
+  resolvedAt: DateTime?
+  closedAt: DateTime?
+  reopenedAt: DateTime?
+  reopenReason: String?
+  rejectionReason: String?
+  rejectedAt: DateTime?
+  claimHash: String?

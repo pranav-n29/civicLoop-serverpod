@@ -1,3 +1,5 @@
+ai:
+  - triageIssue:
 emailIdp:
   - login:
   - startRegistration:
@@ -11,3 +13,14 @@ jwtRefresh:
   - refreshAccessToken:
 greeting:
   - hello:
+issue:
+  - createIssue:
+  - getIssues:
+  - getMyIssues:
+  - getIssueById:
+  - updateIssueStatus:
+  - attachIssuePhoto:
+  - getPhotoUploadDescription:
+  - verifyAndAttachPhoto:
+  - getIssuePhotoUrl:
+  - getIssuePhoto:

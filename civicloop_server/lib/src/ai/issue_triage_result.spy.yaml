@@ -1,0 +1,7 @@
+class: IssueTriageResult
+fields:
+  suggestedTitle: String
+  category: String
+  priority: String
+  department: String
+  summary: String

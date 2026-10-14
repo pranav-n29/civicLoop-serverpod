@@ -1,0 +1,15 @@
+class: CivicIssueAudit
+table: civic_issue_audit
+fields:
+  issueId: int
+  actorId: String
+  actorRole: String
+  actorName: String?
+  action: String
+  previousStatus: String?
+  newStatus: String?
+  notes: String?
+  timestamp: DateTime
+indexes:
+  civic_issue_audit_issue_id_idx:
+    fields: issueId

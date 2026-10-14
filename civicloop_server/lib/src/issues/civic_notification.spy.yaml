@@ -1,0 +1,14 @@
+class: CivicNotification
+table: civic_notification
+fields:
+  recipientId: String
+  issueId: int
+  type: String
+  title: String
+  message: String
+  isRead: bool
+  createdAt: DateTime
+  readAt: DateTime?
+indexes:
+  civic_notification_recipient_id_idx:
+    fields: recipientId

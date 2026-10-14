@@ -11,8 +11,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'dart:typed_data' as _idt;
+import 'package:civicloop_client/src/protocol/ai/issue_triage_result.dart'
+    as _iqxh22ub;
 import 'package:civicloop_client/src/protocol/greetings/greeting.dart'
     as _iqmv00gx;
+import 'package:civicloop_client/src/protocol/issues/issue.dart' as _i3nh278b;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -20,6 +24,30 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// Endpoint for AI-assisted civic issue triage.
+/// {@category Endpoint}
+class EndpointAi extends _isc.EndpointRef {
+  EndpointAi(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'ai';
+
+  /// Analyzes an issue [description] and returns structured triage metadata
+  /// including suggested title, category, priority (low, medium, high, critical),
+  /// responsible department, and a summary.
+  ///
+  /// Throws [ArgumentError] if the description is invalid or empty.
+  /// Throws [AiConfigurationException] if no AI provider credentials are configured.
+  /// Throws [AiProviderException] if the AI provider encounters an error.
+  /// Throws [AiValidationException] if the AI output fails validation.
+  _ida.Future<_iqxh22ub.IssueTriageResult> triageIssue(String description) =>
+      caller.callServerEndpoint<_iqxh22ub.IssueTriageResult>(
+        'ai',
+        'triageIssue',
+        {'description': description},
+      );
+}
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -264,6 +292,405 @@ class EndpointGreeting extends _isc.EndpointRef {
       );
 }
 
+/// Endpoint for creating, listing, and retrieving civic issues.
+/// {@category Endpoint}
+class EndpointIssue extends _isc.EndpointRef {
+  EndpointIssue(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'issue';
+
+  /// Creates a new civic issue.
+  ///
+  /// Validates required text fields, ignores any client-supplied ID, status,
+  /// or createdAt timestamp, sets [createdAt] to current server time and
+  /// [status] to 'open', and persists the record to the database.
+  _ida.Future<_i3nh278b.Issue> createIssue(_i3nh278b.Issue issue) =>
+      caller.callServerEndpoint<_i3nh278b.Issue>(
+        'issue',
+        'createIssue',
+        {'issue': issue},
+      );
+
+  /// Retrieves all civic issues ordered newest first.
+  _ida.Future<List<_i3nh278b.Issue>> getIssues() =>
+      caller.callServerEndpoint<List<_i3nh278b.Issue>>(
+        'issue',
+        'getIssues',
+        {},
+      );
+
+  /// Retrieves all civic issues submitted by the currently authenticated user,
+  /// ordered newest first.
+  ///
+  /// Throws [NotAuthorizedException] if the user is unauthenticated.
+  _ida.Future<List<_i3nh278b.Issue>> getMyIssues() =>
+      caller.callServerEndpoint<List<_i3nh278b.Issue>>(
+        'issue',
+        'getMyIssues',
+        {},
+      );
+
+  /// Retrieves a civic issue by its [id].
+  ///
+  /// Returns `null` if no issue matches the given [id].
+  _ida.Future<_i3nh278b.Issue?> getIssueById(
+    int id, {
+    String? claimToken,
+  }) =>
+      caller.callServerEndpoint<_i3nh278b.Issue?>(
+        'issue',
+        'getIssueById',
+        {
+          'id': id,
+          if (claimToken != null) 'claimToken': claimToken,
+        },
+      );
+
+  /// Updates the status of an existing civic issue.
+  ///
+  /// Throws [ArgumentError] if [id] is less than or equal to 0, or if [status]
+  /// is not one of the allowed statuses: 'open', 'in_progress', 'resolved', 'closed'.
+  /// Returns `null` if no issue exists with the given [id].
+  /// Otherwise, persists the updated status and returns the updated [Issue].
+  _ida.Future<_i3nh278b.Issue?> updateIssueStatus(
+    int id,
+    String status,
+  ) => caller.callServerEndpoint<_i3nh278b.Issue?>(
+    'issue',
+    'updateIssueStatus',
+    {
+      'id': id,
+      'status': status,
+    },
+  );
+
+  /// Attaches a photo directly to an issue using binary [photoData].
+  ///
+  /// Validates issue existence, validates caller ownership or upload token,
+  /// validates [fileName] and [photoData], stores the file in Serverpod public
+  /// cloud storage, updates [Issue.photoPath], and returns the updated [Issue].
+  _ida.Future<_i3nh278b.Issue> attachIssuePhoto(
+    int issueId,
+    String fileName,
+    _idt.ByteData photoData, {
+    String? uploadToken,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'attachIssuePhoto',
+    {
+      'issueId': issueId,
+      'fileName': fileName,
+      'photoData': photoData,
+      if (uploadToken != null) 'uploadToken': uploadToken,
+    },
+  );
+
+  /// Creates a Serverpod direct upload description for client-side uploads.
+  ///
+  /// Validates issue ownership or upload token and filename extension before generating the description.
+  _ida.Future<String> getPhotoUploadDescription(
+    int issueId,
+    String fileName, {
+    String? uploadToken,
+  }) => caller.callServerEndpoint<String>(
+    'issue',
+    'getPhotoUploadDescription',
+    {
+      'issueId': issueId,
+      'fileName': fileName,
+      if (uploadToken != null) 'uploadToken': uploadToken,
+    },
+  );
+
+  /// Verifies a direct client upload and associates the verified photo with the issue.
+  _ida.Future<_i3nh278b.Issue> verifyAndAttachPhoto(
+    int issueId,
+    String path, {
+    String? uploadToken,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'verifyAndAttachPhoto',
+    {
+      'issueId': issueId,
+      'path': path,
+      if (uploadToken != null) 'uploadToken': uploadToken,
+    },
+  );
+
+  /// Retrieves the public download URL for an issue's attached photo.
+  ///
+  /// Returns `null` if the issue does not exist or has no photo attached.
+  _ida.Future<String?> getIssuePhotoUrl(int issueId) =>
+      caller.callServerEndpoint<String?>(
+        'issue',
+        'getIssuePhotoUrl',
+        {'issueId': issueId},
+      );
+
+  /// Retrieves the binary photo data for an issue's attached photo.
+  ///
+  /// Returns `null` if the issue does not exist or has no photo attached.
+  _ida.Future<_idt.ByteData?> getIssuePhoto(int issueId) =>
+      caller.callServerEndpoint<_idt.ByteData?>(
+        'issue',
+        'getIssuePhoto',
+        {'issueId': issueId},
+      );
+
+  _ida.Future<List<_i3nh278b.Issue>> getAdminIssues({
+    String? status,
+    String? category,
+    String? department,
+    String? priority,
+    String? assignedEmployeeId,
+    String? search,
+    int? limit,
+    int? offset,
+  }) => caller.callServerEndpoint<List<_i3nh278b.Issue>>(
+    'issue',
+    'getAdminIssues',
+    {
+      if (status != null) 'status': status,
+      if (category != null) 'category': category,
+      if (department != null) 'department': department,
+      if (priority != null) 'priority': priority,
+      if (assignedEmployeeId != null) 'assignedEmployeeId': assignedEmployeeId,
+      if (search != null) 'search': search,
+      if (limit != null) 'limit': limit,
+      if (offset != null) 'offset': offset,
+    },
+  );
+
+  _ida.Future<_il2as5qe.AdminDashboardStats> getAdminStats() =>
+      caller.callServerEndpoint<_il2as5qe.AdminDashboardStats>(
+        'issue',
+        'getAdminStats',
+        {},
+      );
+
+  _ida.Future<_i3nh278b.Issue> assignIssue(
+    int issueId,
+    String employeeUserId, {
+    DateTime? dueDate,
+    String? priority,
+    String? department,
+    String? notes,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'assignIssue',
+    {
+      'issueId': issueId,
+      'employeeUserId': employeeUserId,
+      if (dueDate != null) 'dueDate': dueDate,
+      if (priority != null) 'priority': priority,
+      if (department != null) 'department': department,
+      if (notes != null) 'notes': notes,
+    },
+  );
+
+  _ida.Future<_i3nh278b.Issue> rejectIssue(
+    int issueId,
+    String reason,
+  ) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'rejectIssue',
+    {
+      'issueId': issueId,
+      'reason': reason,
+    },
+  );
+
+  _ida.Future<List<_i3nh278b.Issue>> getEmployeeAssignedIssues() =>
+      caller.callServerEndpoint<List<_i3nh278b.Issue>>(
+        'issue',
+        'getEmployeeAssignedIssues',
+        {},
+      );
+
+  _ida.Future<_i3nh278b.Issue> startWork(
+    int issueId, {
+    String? notes,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'startWork',
+    {
+      'issueId': issueId,
+      if (notes != null) 'notes': notes,
+    },
+  );
+
+  _ida.Future<_i3nh278b.Issue> addProgressNote(
+    int issueId,
+    String note,
+  ) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'addProgressNote',
+    {
+      'issueId': issueId,
+      'note': note,
+    },
+  );
+
+  _ida.Future<_i3nh278b.Issue> resolveIssue(
+    int issueId,
+    String completionNotes, {
+    String? completionPhotoPath,
+    _idt.ByteData? completionPhotoData,
+    String? completionPhotoFileName,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'resolveIssue',
+    {
+      'issueId': issueId,
+      'completionNotes': completionNotes,
+      if (completionPhotoPath != null) 'completionPhotoPath': completionPhotoPath,
+      if (completionPhotoData != null) 'completionPhotoData': completionPhotoData,
+      if (completionPhotoFileName != null) 'completionPhotoFileName': completionPhotoFileName,
+    },
+  );
+
+  _ida.Future<_i3nh278b.Issue> confirmCitizenClosure(
+    int issueId, {
+    String? claimToken,
+    String? feedbackNotes,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'confirmCitizenClosure',
+    {
+      'issueId': issueId,
+      if (claimToken != null) 'claimToken': claimToken,
+      if (feedbackNotes != null) 'feedbackNotes': feedbackNotes,
+    },
+  );
+
+  _ida.Future<_i3nh278b.Issue> reopenIssue(
+    int issueId,
+    String reason, {
+    String? claimToken,
+  }) => caller.callServerEndpoint<_i3nh278b.Issue>(
+    'issue',
+    'reopenIssue',
+    {
+      'issueId': issueId,
+      'reason': reason,
+      if (claimToken != null) 'claimToken': claimToken,
+    },
+  );
+
+  _ida.Future<List<_il2as5qe.CivicIssueAudit>> getIssueAuditHistory(
+    int issueId, {
+    String? claimToken,
+  }) => caller.callServerEndpoint<List<_il2as5qe.CivicIssueAudit>>(
+    'issue',
+    'getIssueAuditHistory',
+    {
+      'issueId': issueId,
+      if (claimToken != null) 'claimToken': claimToken,
+    },
+  );
+
+  _ida.Future<List<_il2as5qe.CivicNotification>> getNotifications({
+    bool? unreadOnly,
+    int? limit,
+  }) => caller.callServerEndpoint<List<_il2as5qe.CivicNotification>>(
+    'issue',
+    'getNotifications',
+    {
+      if (unreadOnly != null) 'unreadOnly': unreadOnly,
+      if (limit != null) 'limit': limit,
+    },
+  );
+
+  _ida.Future<bool> markNotificationRead(int notificationId) =>
+      caller.callServerEndpoint<bool>(
+        'issue',
+        'markNotificationRead',
+        {'notificationId': notificationId},
+      );
+
+  _ida.Future<int> markAllNotificationsRead() =>
+      caller.callServerEndpoint<int>(
+        'issue',
+        'markAllNotificationsRead',
+        {},
+      );
+
+  _ida.Future<_il2as5qe.StaffUserInfo?> getCurrentUserProfile() =>
+      caller.callServerEndpoint<_il2as5qe.StaffUserInfo?>(
+        'issue',
+        'getCurrentUserProfile',
+        {},
+      );
+
+  _ida.Future<List<_il2as5qe.StaffUserInfo>> getStaffUsers() =>
+      caller.callServerEndpoint<List<_il2as5qe.StaffUserInfo>>(
+        'issue',
+        'getStaffUsers',
+        {},
+      );
+
+  _ida.Future<_il2as5qe.CivicUserRole> provisionStaff(
+    String targetUserId,
+    String role, {
+    String? department,
+    String? fullName,
+    String? email,
+  }) => caller.callServerEndpoint<_il2as5qe.CivicUserRole>(
+    'issue',
+    'provisionStaff',
+    {
+      'targetUserId': targetUserId,
+      'role': role,
+      if (department != null) 'department': department,
+      if (fullName != null) 'fullName': fullName,
+      if (email != null) 'email': email,
+    },
+  );
+
+  _ida.Future<_il2as5qe.CivicUserRole> setStaffActiveStatus(
+    String targetUserId,
+    bool isActive,
+  ) => caller.callServerEndpoint<_il2as5qe.CivicUserRole>(
+    'issue',
+    'setStaffActiveStatus',
+    {
+      'targetUserId': targetUserId,
+      'isActive': isActive,
+    },
+  );
+
+  _ida.Future<_il2as5qe.CivicUserRole> bootstrapFirstAdmin(
+    String secretKey,
+    String adminUserId, {
+    String? email,
+    String? fullName,
+  }) => caller.callServerEndpoint<_il2as5qe.CivicUserRole>(
+    'issue',
+    'bootstrapFirstAdmin',
+    {
+      'secretKey': secretKey,
+      'adminUserId': adminUserId,
+      if (email != null) 'email': email,
+      if (fullName != null) 'fullName': fullName,
+    },
+  );
+
+  _ida.Future<String?> getCompletionPhotoUrl(int issueId) =>
+      caller.callServerEndpoint<String?>(
+        'issue',
+        'getCompletionPhotoUrl',
+        {'issueId': issueId},
+      );
+
+  _ida.Future<_idt.ByteData?> getCompletionPhoto(int issueId) =>
+      caller.callServerEndpoint<_idt.ByteData?>(
+        'issue',
+        'getCompletionPhoto',
+        {'issueId': issueId},
+      );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _iaic.Caller(client);
@@ -302,11 +729,15 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    ai = EndpointAi(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     greeting = EndpointGreeting(this);
+    issue = EndpointIssue(this);
     modules = Modules(this);
   }
+
+  late final EndpointAi ai;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -314,13 +745,17 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointIssue issue;
+
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'ai': ai,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'greeting': greeting,
+    'issue': issue,
   };
 
   @override

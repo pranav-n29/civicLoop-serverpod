@@ -4,6 +4,8 @@ import 'package:civicloop_client/civicloop_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
+export 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
+
 // When you are running the app on a physical device, you need to set the
 // server URL to the IP address of your computer. You can find the IP
 // address by running `ipconfig` on Windows or `ifconfig` on Mac/Linux.
@@ -22,7 +24,7 @@ final serverUrl = getServerUrl();
 /// production servers.
 /// In a larger app, you may want to use the dependency injection of your choice
 /// instead of using a global client object. This is just a simple example.
-late final Client client;
+late Client client;
 
 Future<void> initializeClient() async {
   client = Client(await serverUrl)
