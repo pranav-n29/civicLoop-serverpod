@@ -132,6 +132,41 @@ civicLoop-serverpod/
 
 ---
 
+🏗️ System Architecture
+
+CivicLoop separates the user interface, backend business rules, and persistent data.
+
++------------------------------------------------+
+|             Flutter Application                |
+|                                                |
+| Citizen UI | Administrator UI | Employee UI    |
++-----------------------+------------------------+
+                        |
+                        v
++------------------------------------------------+
+|             Generated Serverpod Client        |
+|             Typed API Communication            |
++-----------------------+------------------------+
+                        |
+                        v
++------------------------------------------------+
+|                Serverpod Backend               |
+|                                                |
+| Endpoints | Authentication | Authorization     |
+| Issue Services | Staff Services | AI Services   |
++-----------------------+------------------------+
+                        |
+             +----------+-----------+
+             |                      |
+             v                      v
++------------------------+  +--------------------+
+|      PostgreSQL        |  |   Gemini API       |
+| Persistent Application |  | AI-Assisted Triage |
+| Data                   |  | (When Configured)  |
++------------------------+  +--------------------+
+
+
+
 ## 🚀 Getting Started
 
 Follow these steps to run the project locally.
