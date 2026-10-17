@@ -132,39 +132,47 @@ civicLoop-serverpod/
 
 ---
 
-🏗️ System Architecture
+## 🏗️ System Architecture
 
 CivicLoop separates the user interface, backend business rules, and persistent data.
 
 +------------------------------------------------+
-|             Flutter Application                |
+|              Flutter Application              |
 |                                                |
-| Citizen UI | Administrator UI | Employee UI    |
-+-----------------------+------------------------+
-                        |
-                        v
+|  +------------+ +-------------+ +------------+ |
+|  |  Citizen   | |    Admin    | |  Employee  | |
+|  |     UI     | |     UI      | |     UI     | |
+|  +------------+ +-------------+ +------------+ |
++------------------------+-----------------------+
+                         |
+                         v
 +------------------------------------------------+
-|             Generated Serverpod Client        |
-|             Typed API Communication            |
-+-----------------------+------------------------+
-                        |
-                        v
+|           Generated Serverpod Client          |
+|                                                |
+|              Typed API Communication           |
++------------------------+-----------------------+
+                         |
+                         v
 +------------------------------------------------+
 |                Serverpod Backend               |
 |                                                |
-| Endpoints | Authentication | Authorization     |
-| Issue Services | Staff Services | AI Services   |
-+-----------------------+------------------------+
-                        |
-             +----------+-----------+
-             |                      |
-             v                      v
+|  +------------+ +-------------+ +------------+ |
+|  |    API     | |    Auth &   | |   Issue    | |
+|  |  Endpoints | |    RBAC     | |  Services  | |
+|  +------------+ +-------------+ +------------+ |
+|                                                |
+|          Staff Services and AI Services        |
++------------------------+-----------------------+
+                         |
+               +---------+---------+
+               |                   |
+               v                   v
 +------------------------+  +--------------------+
-|      PostgreSQL        |  |   Gemini API       |
-| Persistent Application |  | AI-Assisted Triage |
-| Data                   |  | (When Configured)  |
+|      PostgreSQL        |  |     Gemini API     |
+|                        |  |                    |
+|  Persistent Application|  |   AI-Assisted      |
+|         Data           |  |      Triage        |
 +------------------------+  +--------------------+
-
 
 
 ## 🚀 Getting Started
