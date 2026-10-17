@@ -57,7 +57,7 @@ class RoleSelectorScreen extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AdminDashboardScreen(service: workflowService),
+                builder: (_) => const AdminDashboardScreen(),
               ),
             ),
           ),

@@ -32,19 +32,20 @@ abstract final class CivicRadii {
 
 abstract final class CivicTheme {
   static ThemeData get light {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: CivicColors.blue,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: CivicColors.blue,
-      onPrimary: Colors.white,
-      secondary: CivicColors.navy,
-      onSecondary: Colors.white,
-      surface: CivicColors.card,
-      onSurface: CivicColors.navy,
-      outline: CivicColors.border,
-      error: CivicColors.critical,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: CivicColors.blue,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: CivicColors.blue,
+          onPrimary: Colors.white,
+          secondary: CivicColors.navy,
+          onSecondary: Colors.white,
+          surface: CivicColors.card,
+          onSurface: CivicColors.navy,
+          outline: CivicColors.border,
+          error: CivicColors.critical,
+        );
 
     return ThemeData(
       useMaterial3: true,

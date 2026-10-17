@@ -1,0 +1,11 @@
+class: AdminDashboardStats
+fields:
+  totalReports: int
+  openReports: int
+  assignedReports: int
+  inProgressReports: int
+  resolvedReports: int
+  closedReports: int
+  reopenedReports: int
+  rejectedReports: int
+  overdueReports: int

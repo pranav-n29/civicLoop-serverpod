@@ -802,7 +802,7 @@ void main() {
           'summary': 'Spray paint on public property.',
         }),
       );
-      endpoint.setServiceForTesting(AiTriageService(provider: mockProvider));
+      AiEndpoint.setServiceForTesting(AiTriageService(provider: mockProvider));
 
       final emptySession = FakeSession();
       final result = await endpoint.triageIssue(
@@ -820,8 +820,6 @@ void main() {
     test(
       'resolves configurable modelName from session passwords or defaults to gemini-3.5-flash-lite',
       () {
-        final endpoint = AiEndpoint();
-
         // Session with API key and custom model
         final sessionWithCustomModel = FakeSession(
           passwords: {
@@ -830,7 +828,7 @@ void main() {
           },
         );
 
-        final serviceCustom = endpoint.createService(sessionWithCustomModel);
+        final serviceCustom = AiEndpoint.createService(sessionWithCustomModel);
         expect(
           (serviceCustom.provider as GeminiTriageProvider).modelName,
           equals('gemini-3.5-flash-custom'),
@@ -843,7 +841,9 @@ void main() {
           },
         );
 
-        final serviceDefault = endpoint.createService(sessionWithDefaultModel);
+        final serviceDefault = AiEndpoint.createService(
+          sessionWithDefaultModel,
+        );
         expect(
           (serviceDefault.provider as GeminiTriageProvider).modelName,
           equals(GeminiTriageProvider.defaultModel),

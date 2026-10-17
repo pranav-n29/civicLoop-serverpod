@@ -46,18 +46,19 @@ abstract class CivicNotification
       type: jsonSerialization['type'] as String,
       title: jsonSerialization['title'] as String,
       message: jsonSerialization['message'] as String,
-      isRead: jsonSerialization['isRead'] as bool,
+      isRead: _isc.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
       createdAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       readAt: jsonSerialization['readAt'] == null
           ? null
-          : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['readAt'],
-            ),
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['readAt']),
     );
   }
 
+  /// The database id, set if the object has been inserted into the
+  /// database or if it has been fetched from the database. Otherwise,
+  /// the id will be null.
   int? id;
 
   String recipientId;
@@ -76,6 +77,8 @@ abstract class CivicNotification
 
   DateTime? readAt;
 
+  /// Returns a shallow copy of this [CivicNotification]
+  /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CivicNotification copyWith({
     int? id,
@@ -88,7 +91,6 @@ abstract class CivicNotification
     DateTime? createdAt,
     DateTime? readAt,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -141,17 +143,20 @@ class _CivicNotificationImpl extends CivicNotification {
     required DateTime createdAt,
     DateTime? readAt,
   }) : super._(
-          id: id,
-          recipientId: recipientId,
-          issueId: issueId,
-          type: type,
-          title: title,
-          message: message,
-          isRead: isRead,
-          createdAt: createdAt,
-          readAt: readAt,
-        );
+         id: id,
+         recipientId: recipientId,
+         issueId: issueId,
+         type: type,
+         title: title,
+         message: message,
+         isRead: isRead,
+         createdAt: createdAt,
+         readAt: readAt,
+       );
 
+  /// Returns a shallow copy of this [CivicNotification]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
   @override
   CivicNotification copyWith({
     Object? id = _Undefined,

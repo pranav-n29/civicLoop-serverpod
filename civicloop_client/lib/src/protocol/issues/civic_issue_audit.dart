@@ -57,6 +57,9 @@ abstract class CivicIssueAudit
     );
   }
 
+  /// The database id, set if the object has been inserted into the
+  /// database or if it has been fetched from the database. Otherwise,
+  /// the id will be null.
   int? id;
 
   int issueId;
@@ -77,6 +80,8 @@ abstract class CivicIssueAudit
 
   DateTime timestamp;
 
+  /// Returns a shallow copy of this [CivicIssueAudit]
+  /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CivicIssueAudit copyWith({
     int? id,
@@ -90,7 +95,6 @@ abstract class CivicIssueAudit
     String? notes,
     DateTime? timestamp,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -146,18 +150,21 @@ class _CivicIssueAuditImpl extends CivicIssueAudit {
     String? notes,
     required DateTime timestamp,
   }) : super._(
-          id: id,
-          issueId: issueId,
-          actorId: actorId,
-          actorRole: actorRole,
-          actorName: actorName,
-          action: action,
-          previousStatus: previousStatus,
-          newStatus: newStatus,
-          notes: notes,
-          timestamp: timestamp,
-        );
+         id: id,
+         issueId: issueId,
+         actorId: actorId,
+         actorRole: actorRole,
+         actorName: actorName,
+         action: action,
+         previousStatus: previousStatus,
+         newStatus: newStatus,
+         notes: notes,
+         timestamp: timestamp,
+       );
 
+  /// Returns a shallow copy of this [CivicIssueAudit]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
   @override
   CivicIssueAudit copyWith({
     Object? id = _Undefined,
@@ -178,8 +185,9 @@ class _CivicIssueAuditImpl extends CivicIssueAudit {
       actorRole: actorRole ?? this.actorRole,
       actorName: actorName is String? ? actorName : this.actorName,
       action: action ?? this.action,
-      previousStatus:
-          previousStatus is String? ? previousStatus : this.previousStatus,
+      previousStatus: previousStatus is String?
+          ? previousStatus
+          : this.previousStatus,
       newStatus: newStatus is String? ? newStatus : this.newStatus,
       notes: notes is String? ? notes : this.notes,
       timestamp: timestamp ?? this.timestamp,

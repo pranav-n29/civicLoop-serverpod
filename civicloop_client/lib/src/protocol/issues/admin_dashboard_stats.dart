@@ -38,8 +38,7 @@ abstract class AdminDashboardStats
     required int overdueReports,
   }) = _AdminDashboardStatsImpl;
 
-  factory AdminDashboardStats.fromJson(
-      Map<String, dynamic> jsonSerialization) {
+  factory AdminDashboardStats.fromJson(Map<String, dynamic> jsonSerialization) {
     return AdminDashboardStats(
       totalReports: jsonSerialization['totalReports'] as int,
       openReports: jsonSerialization['openReports'] as int,
@@ -54,15 +53,25 @@ abstract class AdminDashboardStats
   }
 
   int totalReports;
+
   int openReports;
+
   int assignedReports;
+
   int inProgressReports;
+
   int resolvedReports;
+
   int closedReports;
+
   int reopenedReports;
+
   int rejectedReports;
+
   int overdueReports;
 
+  /// Returns a shallow copy of this [AdminDashboardStats]
+  /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   AdminDashboardStats copyWith({
     int? totalReports,
@@ -75,7 +84,6 @@ abstract class AdminDashboardStats
     int? rejectedReports,
     int? overdueReports,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -114,8 +122,6 @@ abstract class AdminDashboardStats
   }
 }
 
-class _Undefined {}
-
 class _AdminDashboardStatsImpl extends AdminDashboardStats {
   _AdminDashboardStatsImpl({
     required int totalReports,
@@ -128,17 +134,20 @@ class _AdminDashboardStatsImpl extends AdminDashboardStats {
     required int rejectedReports,
     required int overdueReports,
   }) : super._(
-          totalReports: totalReports,
-          openReports: openReports,
-          assignedReports: assignedReports,
-          inProgressReports: inProgressReports,
-          resolvedReports: resolvedReports,
-          closedReports: closedReports,
-          reopenedReports: reopenedReports,
-          rejectedReports: rejectedReports,
-          overdueReports: overdueReports,
-        );
+         totalReports: totalReports,
+         openReports: openReports,
+         assignedReports: assignedReports,
+         inProgressReports: inProgressReports,
+         resolvedReports: resolvedReports,
+         closedReports: closedReports,
+         reopenedReports: reopenedReports,
+         rejectedReports: rejectedReports,
+         overdueReports: overdueReports,
+       );
 
+  /// Returns a shallow copy of this [AdminDashboardStats]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
   @override
   AdminDashboardStats copyWith({
     int? totalReports,

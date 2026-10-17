@@ -12,7 +12,7 @@ class AiEndpoint extends Endpoint {
   static AiTriageService? serviceForTesting;
 
   /// Injects a custom [service] for testing purposes.
-  void setServiceForTesting(AiTriageService? service) {
+  static void setServiceForTesting(AiTriageService? service) {
     serviceForTesting = service;
   }
 
@@ -33,7 +33,7 @@ class AiEndpoint extends Endpoint {
   }
 
   /// Resolves credentials, model configuration, and creates the [AiTriageService].
-  AiTriageService createService(
+  static AiTriageService createService(
     Session session, {
     HttpClient Function()? clientFactory,
     Uri? customEndpointUri,

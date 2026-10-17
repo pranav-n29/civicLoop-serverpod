@@ -16,8 +16,18 @@ import 'dart:io' as _idi;
 import 'dart:typed_data' as _idt;
 import 'package:civicloop_server/src/generated/ai/issue_triage_result.dart'
     as _i3eqe9ng;
+import 'package:civicloop_server/src/generated/auth/civic_user_role.dart'
+    as _in22eagb;
+import 'package:civicloop_server/src/generated/auth/staff_user_info.dart'
+    as _izhk99zn;
 import 'package:civicloop_server/src/generated/greetings/greeting.dart'
     as _iavtf41r;
+import 'package:civicloop_server/src/generated/issues/admin_dashboard_stats.dart'
+    as _ixlxkkig;
+import 'package:civicloop_server/src/generated/issues/civic_issue_audit.dart'
+    as _iylxpg2e;
+import 'package:civicloop_server/src/generated/issues/civic_notification.dart'
+    as _ilvkkzq8;
 import 'package:civicloop_server/src/generated/issues/issue.dart' as _i5xq1slo;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -770,181 +780,6 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<_i5xq1slo.Issue> attachIssuePhoto(
-    _ist.TestSessionBuilder sessionBuilder,
-    int issueId,
-    String fileName,
-    _idt.ByteData photoData, {
-    String? uploadToken,
-  }) async {
-    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'issue',
-            method: 'attachIssuePhoto',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'issue',
-          methodName: 'attachIssuePhoto',
-          parameters: _ist.testObjectToJson({
-            'issueId': issueId,
-            'fileName': fileName,
-            'photoData': photoData,
-            'uploadToken': uploadToken,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i5xq1slo.Issue>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _ida.Future<String> getPhotoUploadDescription(
-    _ist.TestSessionBuilder sessionBuilder,
-    int issueId,
-    String fileName, {
-    String? uploadToken,
-  }) async {
-    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'issue',
-            method: 'getPhotoUploadDescription',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'issue',
-          methodName: 'getPhotoUploadDescription',
-          parameters: _ist.testObjectToJson({
-            'issueId': issueId,
-            'fileName': fileName,
-            'uploadToken': uploadToken,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<String>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _ida.Future<_i5xq1slo.Issue> verifyAndAttachPhoto(
-    _ist.TestSessionBuilder sessionBuilder,
-    int issueId,
-    String path, {
-    String? uploadToken,
-  }) async {
-    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'issue',
-            method: 'verifyAndAttachPhoto',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'issue',
-          methodName: 'verifyAndAttachPhoto',
-          parameters: _ist.testObjectToJson({
-            'issueId': issueId,
-            'path': path,
-            'uploadToken': uploadToken,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i5xq1slo.Issue>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _ida.Future<String?> getIssuePhotoUrl(
-    _ist.TestSessionBuilder sessionBuilder,
-    int issueId,
-  ) async {
-    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'issue',
-            method: 'getIssuePhotoUrl',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'issue',
-          methodName: 'getIssuePhotoUrl',
-          parameters: _ist.testObjectToJson({'issueId': issueId}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<String?>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _ida.Future<_idt.ByteData?> getIssuePhoto(
-    _ist.TestSessionBuilder sessionBuilder,
-    int issueId,
-  ) async {
-    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'issue',
-            method: 'getIssuePhoto',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'issue',
-          methodName: 'getIssuePhoto',
-          parameters: _ist.testObjectToJson({'issueId': issueId}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_idt.ByteData?>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
   _ida.Future<List<_i5xq1slo.Issue>> getAdminIssues(
     _ist.TestSessionBuilder sessionBuilder, {
     String? status,
@@ -992,7 +827,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<AdminDashboardStats> getAdminStats(
+  _ida.Future<_ixlxkkig.AdminDashboardStats> getAdminStats(
     _ist.TestSessionBuilder sessionBuilder,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1014,7 +849,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<AdminDashboardStats>);
+                as _ida.Future<_ixlxkkig.AdminDashboardStats>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1315,7 +1150,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<List<CivicIssueAudit>> getIssueAuditHistory(
+  _ida.Future<List<_iylxpg2e.CivicIssueAudit>> getIssueAuditHistory(
     _ist.TestSessionBuilder sessionBuilder,
     int issueId, {
     String? claimToken,
@@ -1342,7 +1177,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<List<CivicIssueAudit>>);
+                as _ida.Future<List<_iylxpg2e.CivicIssueAudit>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1350,7 +1185,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<List<CivicNotification>> getNotifications(
+  _ida.Future<List<_ilvkkzq8.CivicNotification>> getNotifications(
     _ist.TestSessionBuilder sessionBuilder, {
     bool? unreadOnly,
     int? limit,
@@ -1377,7 +1212,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<List<CivicNotification>>);
+                as _ida.Future<List<_ilvkkzq8.CivicNotification>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1446,7 +1281,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<StaffUserInfo?> getCurrentUserProfile(
+  _ida.Future<_izhk99zn.StaffUserInfo?> getCurrentUserProfile(
     _ist.TestSessionBuilder sessionBuilder,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1468,7 +1303,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<StaffUserInfo?>);
+                as _ida.Future<_izhk99zn.StaffUserInfo?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1476,7 +1311,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<List<StaffUserInfo>> getStaffUsers(
+  _ida.Future<List<_izhk99zn.StaffUserInfo>> getStaffUsers(
     _ist.TestSessionBuilder sessionBuilder,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1498,7 +1333,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<List<StaffUserInfo>>);
+                as _ida.Future<List<_izhk99zn.StaffUserInfo>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1506,7 +1341,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<CivicUserRole> provisionStaff(
+  _ida.Future<_in22eagb.CivicUserRole> provisionStaff(
     _ist.TestSessionBuilder sessionBuilder,
     String targetUserId,
     String role, {
@@ -1539,7 +1374,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<CivicUserRole>);
+                as _ida.Future<_in22eagb.CivicUserRole>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1547,7 +1382,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<CivicUserRole> setStaffActiveStatus(
+  _ida.Future<_in22eagb.CivicUserRole> setStaffActiveStatus(
     _ist.TestSessionBuilder sessionBuilder,
     String targetUserId,
     bool isActive,
@@ -1574,7 +1409,7 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<CivicUserRole>);
+                as _ida.Future<_in22eagb.CivicUserRole>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1582,7 +1417,7 @@ class _IssueEndpoint {
     });
   }
 
-  _ida.Future<CivicUserRole> bootstrapFirstAdmin(
+  _ida.Future<_in22eagb.CivicUserRole> bootstrapFirstAdmin(
     _ist.TestSessionBuilder sessionBuilder,
     String secretKey,
     String adminUserId, {
@@ -1613,7 +1448,182 @@ class _IssueEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _ida.Future<CivicUserRole>);
+                as _ida.Future<_in22eagb.CivicUserRole>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5xq1slo.Issue> attachIssuePhoto(
+    _ist.TestSessionBuilder sessionBuilder,
+    int issueId,
+    String fileName,
+    _idt.ByteData photoData, {
+    String? uploadToken,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'issue',
+            method: 'attachIssuePhoto',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'issue',
+          methodName: 'attachIssuePhoto',
+          parameters: _ist.testObjectToJson({
+            'issueId': issueId,
+            'fileName': fileName,
+            'photoData': photoData,
+            'uploadToken': uploadToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5xq1slo.Issue>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<String> getPhotoUploadDescription(
+    _ist.TestSessionBuilder sessionBuilder,
+    int issueId,
+    String fileName, {
+    String? uploadToken,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'issue',
+            method: 'getPhotoUploadDescription',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'issue',
+          methodName: 'getPhotoUploadDescription',
+          parameters: _ist.testObjectToJson({
+            'issueId': issueId,
+            'fileName': fileName,
+            'uploadToken': uploadToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5xq1slo.Issue> verifyAndAttachPhoto(
+    _ist.TestSessionBuilder sessionBuilder,
+    int issueId,
+    String path, {
+    String? uploadToken,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'issue',
+            method: 'verifyAndAttachPhoto',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'issue',
+          methodName: 'verifyAndAttachPhoto',
+          parameters: _ist.testObjectToJson({
+            'issueId': issueId,
+            'path': path,
+            'uploadToken': uploadToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5xq1slo.Issue>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<String?> getIssuePhotoUrl(
+    _ist.TestSessionBuilder sessionBuilder,
+    int issueId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'issue',
+            method: 'getIssuePhotoUrl',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'issue',
+          methodName: 'getIssuePhotoUrl',
+          parameters: _ist.testObjectToJson({'issueId': issueId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_idt.ByteData?> getIssuePhoto(
+    _ist.TestSessionBuilder sessionBuilder,
+    int issueId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'issue',
+            method: 'getIssuePhoto',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'issue',
+          methodName: 'getIssuePhoto',
+          parameters: _ist.testObjectToJson({'issueId': issueId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_idt.ByteData?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

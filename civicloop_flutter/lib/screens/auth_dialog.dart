@@ -99,8 +99,25 @@ class _AuthDialogState extends State<AuthDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screenWidth < 400 ? 16 : 24,
+        vertical: 20,
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: screenWidth < 400 ? 16 : 22,
+        vertical: 16,
+      ),
+      titlePadding: EdgeInsets.fromLTRB(
+        screenWidth < 400 ? 16 : 22,
+        18,
+        screenWidth < 400 ? 16 : 22,
+        0,
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       title: Row(
         children: [
           Icon(
@@ -108,15 +125,23 @@ class _AuthDialogState extends State<AuthDialog> {
             color: colors.primary,
           ),
           const SizedBox(width: 8),
-          Text(_isSignedIn ? 'Account Profile' : 'Sign In / Account'),
+          Flexible(
+            child: Text(
+              _isSignedIn ? 'Account Profile' : 'Sign In / Account',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
-      content: SingleChildScrollView(
-        child: SizedBox(
-          width: 420,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          maxHeight: screenHeight * 0.75,
+        ),
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_isSignedIn) ...[
                 Container(
@@ -137,11 +162,14 @@ class _AuthDialogState extends State<AuthDialog> {
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Authenticated Session',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colors.primary,
+                          Expanded(
+                            child: Text(
+                              'Authenticated Session',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colors.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -293,8 +321,7 @@ class _AuthDialogState extends State<AuthDialog> {
                     ),
                   ),
                 ] else ...[
-                  SignInWidget(
-                    client: client,
+                  _ResponsiveEmailAuthWidget(
                     onAuthenticated: () {
                       if (context.mounted) {
                         Navigator.of(context).pop();
@@ -317,13 +344,16 @@ class _AuthDialogState extends State<AuthDialog> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _showSignInWidget = false;
-                      });
-                    },
-                    child: const Text('Back to options'),
+                  Center(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.arrow_back, size: 16),
+                      onPressed: () {
+                        setState(() {
+                          _showSignInWidget = false;
+                        });
+                      },
+                      label: const Text('Back to options'),
+                    ),
                   ),
                 ],
               ],
@@ -335,6 +365,549 @@ class _AuthDialogState extends State<AuthDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Fully responsive email authentication form that wraps buttons and links,
+/// accommodates small screen widths, and supports login, registration,
+/// verification, and password reset flows with EmailAuthController.
+class _ResponsiveEmailAuthWidget extends StatefulWidget {
+  final VoidCallback onAuthenticated;
+  final ValueChanged<String>? onError;
+
+  const _ResponsiveEmailAuthWidget({
+    required this.onAuthenticated,
+    this.onError,
+  });
+
+  @override
+  State<_ResponsiveEmailAuthWidget> createState() =>
+      _ResponsiveEmailAuthWidgetState();
+}
+
+class _ResponsiveEmailAuthWidgetState
+    extends State<_ResponsiveEmailAuthWidget> {
+  late final EmailAuthController _controller;
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = EmailAuthController(
+      client: client,
+      onAuthenticated: widget.onAuthenticated,
+      onError: (err) {
+        widget.onError?.call(err.toString());
+      },
+    );
+    _controller.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_controller.errorMessage != null &&
+            _controller.state == EmailAuthState.error) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.errorContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 18,
+                  color: colors.onErrorContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _controller.errorMessage!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onErrorContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        switch (_controller.currentScreen) {
+          EmailFlowScreen.login => _buildLoginForm(theme, colors),
+          EmailFlowScreen.startRegistration => _buildStartRegistrationForm(
+            theme,
+            colors,
+          ),
+          EmailFlowScreen.verifyRegistration => _buildVerifyRegistrationForm(
+            theme,
+            colors,
+          ),
+          EmailFlowScreen.completeRegistration =>
+            _buildCompleteRegistrationForm(theme, colors),
+          EmailFlowScreen.requestPasswordReset =>
+            _buildRequestPasswordResetForm(theme, colors),
+          EmailFlowScreen.verifyPasswordReset => _buildVerifyPasswordResetForm(
+            theme,
+            colors,
+          ),
+          EmailFlowScreen.completePasswordReset =>
+            _buildCompletePasswordResetForm(theme, colors),
+        },
+      ],
+    );
+  }
+
+  Widget _buildLoginForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Sign In',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter your email and password to access your account.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email',
+            prefixIcon: const Icon(Icons.email_outlined, size: 20),
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _controller.passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline, size: 20),
+            isDense: true,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                size: 20,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () =>
+                _controller.navigateTo(EmailFlowScreen.requestPasswordReset),
+            child: const Text(
+              'Forgot password?',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        FilledButton(
+          onPressed: _controller.isLoading ? null : () => _controller.login(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Sign In'),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              "Don't have an account?",
+              style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
+            ),
+            TextButton(
+              onPressed: () =>
+                  _controller.navigateTo(EmailFlowScreen.startRegistration),
+              child: const Text('Sign up', style: TextStyle(fontSize: 13)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStartRegistrationForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Create Account',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter your email address to receive a verification code.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email',
+            prefixIcon: const Icon(Icons.email_outlined, size: 20),
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.startRegistration(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Continue'),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'Already have an account?',
+              style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
+            ),
+            TextButton(
+              onPressed: () => _controller.navigateTo(EmailFlowScreen.login),
+              child: const Text('Sign in', style: TextStyle(fontSize: 13)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerifyRegistrationForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Verify Email',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter the verification code sent to ${_controller.emailController.text.trim()}.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.verificationCodeController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Verification Code',
+            prefixIcon: const Icon(Icons.pin, size: 20),
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.verifyRegistrationCode(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Verify Code'),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          children: [
+            TextButton(
+              onPressed: _controller.isLoading
+                  ? null
+                  : () => _controller.resendVerificationCode(),
+              child: const Text('Resend code', style: TextStyle(fontSize: 12)),
+            ),
+            TextButton(
+              onPressed: () =>
+                  _controller.navigateTo(EmailFlowScreen.startRegistration),
+              child: const Text('Change email', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompleteRegistrationForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Set Password',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Choose a password for your account.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline, size: 20),
+            isDense: true,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                size: 20,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.finishRegistration(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Complete Registration'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequestPasswordResetForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Reset Password',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter your email to receive a password reset code.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email',
+            prefixIcon: const Icon(Icons.email_outlined, size: 20),
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.startPasswordReset(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Send Reset Code'),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: TextButton(
+            onPressed: () => _controller.navigateTo(EmailFlowScreen.login),
+            child: const Text(
+              'Back to Sign In',
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerifyPasswordResetForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Verify Reset Code',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter the code sent to your email to verify password reset.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.verificationCodeController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Verification Code',
+            prefixIcon: const Icon(Icons.pin, size: 20),
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.verifyPasswordResetCode(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Verify Code'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompletePasswordResetForm(ThemeData theme, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'New Password',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Enter your new password.',
+          style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller.passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'New Password',
+            prefixIcon: const Icon(Icons.lock_outline, size: 20),
+            isDense: true,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                size: 20,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _controller.isLoading
+              ? null
+              : () => _controller.finishPasswordReset(),
+          child: _controller.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Reset Password & Sign In'),
         ),
       ],
     );

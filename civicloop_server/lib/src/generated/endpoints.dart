@@ -22,7 +22,6 @@ import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../issues/issue_endpoint.dart' as _i2bx2j6j;
-import 'protocol.dart' as _protocol;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -407,143 +406,6 @@ class Endpoints extends _is.EndpointDispatch {
                     params['status'],
                   ),
         ),
-        'attachIssuePhoto': _is.MethodConnector(
-          name: 'attachIssuePhoto',
-          params: {
-            'issueId': _is.ParameterDescription(
-              name: 'issueId',
-              type: _is.getType<int>(),
-              nullable: false,
-            ),
-            'fileName': _is.ParameterDescription(
-              name: 'fileName',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-            'photoData': _is.ParameterDescription(
-              name: 'photoData',
-              type: _is.getType<_idt.ByteData>(),
-              nullable: false,
-            ),
-            'uploadToken': _is.ParameterDescription(
-              name: 'uploadToken',
-              type: _is.getType<String?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .attachIssuePhoto(
-                    session,
-                    params['issueId'],
-                    params['fileName'],
-                    params['photoData'],
-                    uploadToken: params['uploadToken'],
-                  ),
-        ),
-        'getPhotoUploadDescription': _is.MethodConnector(
-          name: 'getPhotoUploadDescription',
-          params: {
-            'issueId': _is.ParameterDescription(
-              name: 'issueId',
-              type: _is.getType<int>(),
-              nullable: false,
-            ),
-            'fileName': _is.ParameterDescription(
-              name: 'fileName',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-            'uploadToken': _is.ParameterDescription(
-              name: 'uploadToken',
-              type: _is.getType<String?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .getPhotoUploadDescription(
-                    session,
-                    params['issueId'],
-                    params['fileName'],
-                    uploadToken: params['uploadToken'],
-                  ),
-        ),
-        'verifyAndAttachPhoto': _is.MethodConnector(
-          name: 'verifyAndAttachPhoto',
-          params: {
-            'issueId': _is.ParameterDescription(
-              name: 'issueId',
-              type: _is.getType<int>(),
-              nullable: false,
-            ),
-            'path': _is.ParameterDescription(
-              name: 'path',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-            'uploadToken': _is.ParameterDescription(
-              name: 'uploadToken',
-              type: _is.getType<String?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .verifyAndAttachPhoto(
-                    session,
-                    params['issueId'],
-                    params['path'],
-                    uploadToken: params['uploadToken'],
-                  ),
-        ),
-        'getIssuePhotoUrl': _is.MethodConnector(
-          name: 'getIssuePhotoUrl',
-          params: {
-            'issueId': _is.ParameterDescription(
-              name: 'issueId',
-              type: _is.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .getIssuePhotoUrl(
-                    session,
-                    params['issueId'],
-                  ),
-        ),
-        'getIssuePhoto': _is.MethodConnector(
-          name: 'getIssuePhoto',
-          params: {
-            'issueId': _is.ParameterDescription(
-              name: 'issueId',
-              type: _is.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).getIssuePhoto(
-                    session,
-                    params['issueId'],
-                  ),
-        ),
         'getAdminIssues': _is.MethodConnector(
           name: 'getAdminIssues',
           params: {
@@ -601,8 +463,8 @@ class Endpoints extends _is.EndpointDispatch {
                     priority: params['priority'],
                     assignedEmployeeId: params['assignedEmployeeId'],
                     search: params['search'],
-                    limit: params['limit'] ?? 50,
-                    offset: params['offset'] ?? 0,
+                    limit: params['limit'],
+                    offset: params['offset'],
                   ),
         ),
         'getAdminStats': _is.MethodConnector(
@@ -653,8 +515,8 @@ class Endpoints extends _is.EndpointDispatch {
               (
                 _is.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .assignIssue(
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).assignIssue(
                     session,
                     params['issueId'],
                     params['employeeUserId'],
@@ -682,8 +544,8 @@ class Endpoints extends _is.EndpointDispatch {
               (
                 _is.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .rejectIssue(
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).rejectIssue(
                     session,
                     params['issueId'],
                     params['reason'],
@@ -717,8 +579,8 @@ class Endpoints extends _is.EndpointDispatch {
               (
                 _is.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .startWork(
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).startWork(
                     session,
                     params['issueId'],
                     notes: params['notes'],
@@ -782,8 +644,8 @@ class Endpoints extends _is.EndpointDispatch {
               (
                 _is.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .resolveIssue(
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).resolveIssue(
                     session,
                     params['issueId'],
                     params['completionNotes'],
@@ -846,8 +708,8 @@ class Endpoints extends _is.EndpointDispatch {
               (
                 _is.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
-                  .reopenIssue(
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).reopenIssue(
                     session,
                     params['issueId'],
                     params['reason'],
@@ -901,7 +763,7 @@ class Endpoints extends _is.EndpointDispatch {
                   .getNotifications(
                     session,
                     unreadOnly: params['unreadOnly'],
-                    limit: params['limit'] ?? 50,
+                    limit: params['limit'],
                   ),
         ),
         'markNotificationRead': _is.MethodConnector(
@@ -1056,6 +918,143 @@ class Endpoints extends _is.EndpointDispatch {
                     params['adminUserId'],
                     email: params['email'],
                     fullName: params['fullName'],
+                  ),
+        ),
+        'attachIssuePhoto': _is.MethodConnector(
+          name: 'attachIssuePhoto',
+          params: {
+            'issueId': _is.ParameterDescription(
+              name: 'issueId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'fileName': _is.ParameterDescription(
+              name: 'fileName',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'photoData': _is.ParameterDescription(
+              name: 'photoData',
+              type: _is.getType<_idt.ByteData>(),
+              nullable: false,
+            ),
+            'uploadToken': _is.ParameterDescription(
+              name: 'uploadToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
+                  .attachIssuePhoto(
+                    session,
+                    params['issueId'],
+                    params['fileName'],
+                    params['photoData'],
+                    uploadToken: params['uploadToken'],
+                  ),
+        ),
+        'getPhotoUploadDescription': _is.MethodConnector(
+          name: 'getPhotoUploadDescription',
+          params: {
+            'issueId': _is.ParameterDescription(
+              name: 'issueId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'fileName': _is.ParameterDescription(
+              name: 'fileName',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'uploadToken': _is.ParameterDescription(
+              name: 'uploadToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
+                  .getPhotoUploadDescription(
+                    session,
+                    params['issueId'],
+                    params['fileName'],
+                    uploadToken: params['uploadToken'],
+                  ),
+        ),
+        'verifyAndAttachPhoto': _is.MethodConnector(
+          name: 'verifyAndAttachPhoto',
+          params: {
+            'issueId': _is.ParameterDescription(
+              name: 'issueId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'path': _is.ParameterDescription(
+              name: 'path',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'uploadToken': _is.ParameterDescription(
+              name: 'uploadToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
+                  .verifyAndAttachPhoto(
+                    session,
+                    params['issueId'],
+                    params['path'],
+                    uploadToken: params['uploadToken'],
+                  ),
+        ),
+        'getIssuePhotoUrl': _is.MethodConnector(
+          name: 'getIssuePhotoUrl',
+          params: {
+            'issueId': _is.ParameterDescription(
+              name: 'issueId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['issue'] as _i2bx2j6j.IssueEndpoint)
+                  .getIssuePhotoUrl(
+                    session,
+                    params['issueId'],
+                  ),
+        ),
+        'getIssuePhoto': _is.MethodConnector(
+          name: 'getIssuePhoto',
+          params: {
+            'issueId': _is.ParameterDescription(
+              name: 'issueId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).getIssuePhoto(
+                    session,
+                    params['issueId'],
                   ),
         ),
         'getCompletionPhotoUrl': _is.MethodConnector(

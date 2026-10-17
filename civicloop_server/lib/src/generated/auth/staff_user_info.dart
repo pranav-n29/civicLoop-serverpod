@@ -41,20 +41,28 @@ abstract class StaffUserInfo
       fullName: jsonSerialization['fullName'] as String?,
       role: jsonSerialization['role'] as String,
       department: jsonSerialization['department'] as String?,
-      isActive: jsonSerialization['isActive'] as bool,
+      isActive: _is.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
       activeAssignedCasesCount:
           jsonSerialization['activeAssignedCasesCount'] as int,
     );
   }
 
   String userId;
+
   String? email;
+
   String? fullName;
+
   String role;
+
   String? department;
+
   bool isActive;
+
   int activeAssignedCasesCount;
 
+  /// Returns a shallow copy of this [StaffUserInfo]
+  /// with some or all fields replaced by the given arguments.
   @_is.useResult
   StaffUserInfo copyWith({
     String? userId,
@@ -65,7 +73,6 @@ abstract class StaffUserInfo
     bool? isActive,
     int? activeAssignedCasesCount,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -112,15 +119,18 @@ class _StaffUserInfoImpl extends StaffUserInfo {
     required bool isActive,
     required int activeAssignedCasesCount,
   }) : super._(
-          userId: userId,
-          email: email,
-          fullName: fullName,
-          role: role,
-          department: department,
-          isActive: isActive,
-          activeAssignedCasesCount: activeAssignedCasesCount,
-        );
+         userId: userId,
+         email: email,
+         fullName: fullName,
+         role: role,
+         department: department,
+         isActive: isActive,
+         activeAssignedCasesCount: activeAssignedCasesCount,
+       );
 
+  /// Returns a shallow copy of this [StaffUserInfo]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
   @override
   StaffUserInfo copyWith({
     String? userId,

@@ -26,3 +26,5 @@ fields:
   rejectionReason: String?
   rejectedAt: DateTime?
   claimHash: String?
+  claimToken: String?, !persist
+  uploadToken: String?, !persist

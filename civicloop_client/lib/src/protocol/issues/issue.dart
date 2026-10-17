@@ -102,13 +102,10 @@ abstract class Issue
             ),
       dueDate: jsonSerialization['dueDate'] == null
           ? null
-          : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['dueDate'],
-            ),
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['dueDate']),
       progressNotes: jsonSerialization['progressNotes'] as String?,
       completionNotes: jsonSerialization['completionNotes'] as String?,
-      completionPhotoPath:
-          jsonSerialization['completionPhotoPath'] as String?,
+      completionPhotoPath: jsonSerialization['completionPhotoPath'] as String?,
       resolvedAt: jsonSerialization['resolvedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
@@ -116,9 +113,7 @@ abstract class Issue
             ),
       closedAt: jsonSerialization['closedAt'] == null
           ? null
-          : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['closedAt'],
-            ),
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['closedAt']),
       reopenedAt: jsonSerialization['reopenedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
@@ -137,6 +132,9 @@ abstract class Issue
     );
   }
 
+  /// The database id, set if the object has been inserted into the
+  /// database or if it has been fetched from the database. Otherwise,
+  /// the id will be null.
   int? id;
 
   String title;
@@ -193,6 +191,8 @@ abstract class Issue
 
   String? uploadToken;
 
+  /// Returns a shallow copy of this [Issue]
+  /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   Issue copyWith({
     int? id,
@@ -224,7 +224,6 @@ abstract class Issue
     String? claimToken,
     String? uploadToken,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -338,36 +337,39 @@ class _IssueImpl extends Issue {
     String? claimToken,
     String? uploadToken,
   }) : super._(
-          id: id,
-          title: title,
-          description: description,
-          category: category,
-          status: status,
-          createdAt: createdAt,
-          latitude: latitude,
-          longitude: longitude,
-          userId: userId,
-          photoPath: photoPath,
-          priority: priority,
-          department: department,
-          assignedEmployeeId: assignedEmployeeId,
-          assignedEmployeeName: assignedEmployeeName,
-          assignedAt: assignedAt,
-          dueDate: dueDate,
-          progressNotes: progressNotes,
-          completionNotes: completionNotes,
-          completionPhotoPath: completionPhotoPath,
-          resolvedAt: resolvedAt,
-          closedAt: closedAt,
-          reopenedAt: reopenedAt,
-          reopenReason: reopenReason,
-          rejectionReason: rejectionReason,
-          rejectedAt: rejectedAt,
-          claimHash: claimHash,
-          claimToken: claimToken,
-          uploadToken: uploadToken,
-        );
+         id: id,
+         title: title,
+         description: description,
+         category: category,
+         status: status,
+         createdAt: createdAt,
+         latitude: latitude,
+         longitude: longitude,
+         userId: userId,
+         photoPath: photoPath,
+         priority: priority,
+         department: department,
+         assignedEmployeeId: assignedEmployeeId,
+         assignedEmployeeName: assignedEmployeeName,
+         assignedAt: assignedAt,
+         dueDate: dueDate,
+         progressNotes: progressNotes,
+         completionNotes: completionNotes,
+         completionPhotoPath: completionPhotoPath,
+         resolvedAt: resolvedAt,
+         closedAt: closedAt,
+         reopenedAt: reopenedAt,
+         reopenReason: reopenReason,
+         rejectionReason: rejectionReason,
+         rejectedAt: rejectedAt,
+         claimHash: claimHash,
+         claimToken: claimToken,
+         uploadToken: uploadToken,
+       );
 
+  /// Returns a shallow copy of this [Issue]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
   @override
   Issue copyWith({
     Object? id = _Undefined,
@@ -420,18 +422,19 @@ class _IssueImpl extends Issue {
           : this.assignedEmployeeName,
       assignedAt: assignedAt is DateTime? ? assignedAt : this.assignedAt,
       dueDate: dueDate is DateTime? ? dueDate : this.dueDate,
-      progressNotes:
-          progressNotes is String? ? progressNotes : this.progressNotes,
-      completionNotes:
-          completionNotes is String? ? completionNotes : this.completionNotes,
+      progressNotes: progressNotes is String?
+          ? progressNotes
+          : this.progressNotes,
+      completionNotes: completionNotes is String?
+          ? completionNotes
+          : this.completionNotes,
       completionPhotoPath: completionPhotoPath is String?
           ? completionPhotoPath
           : this.completionPhotoPath,
       resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
       closedAt: closedAt is DateTime? ? closedAt : this.closedAt,
       reopenedAt: reopenedAt is DateTime? ? reopenedAt : this.reopenedAt,
-      reopenReason:
-          reopenReason is String? ? reopenReason : this.reopenReason,
+      reopenReason: reopenReason is String? ? reopenReason : this.reopenReason,
       rejectionReason: rejectionReason is String?
           ? rejectionReason
           : this.rejectionReason,

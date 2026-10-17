@@ -99,8 +99,9 @@ class IssueEndpoint extends Endpoint {
     Issue issueToReturn = created.copyWith(uploadToken: uploadToken);
 
     if (authUserId == null) {
-      final (rawToken, tokenHash) =
-          claimService.generateClaimToken(created.id!);
+      final (rawToken, tokenHash) = claimService.generateClaimToken(
+        created.id!,
+      );
       final updatedWithClaim = created.copyWith(claimHash: tokenHash);
       await Issue.db.updateRow(session, updatedWithClaim);
       claimToken = rawToken;
@@ -179,8 +180,8 @@ class IssueEndpoint extends Endpoint {
     }
     final effectiveDomain =
         (officialDomain != null && officialDomain.trim().isNotEmpty)
-            ? officialDomain.trim().toLowerCase()
-            : 'official.civicloop';
+        ? officialDomain.trim().toLowerCase()
+        : 'official.civicloop';
 
     final normalizedDomain = effectiveDomain.startsWith('@')
         ? effectiveDomain
@@ -347,8 +348,8 @@ class IssueEndpoint extends Endpoint {
     String? priority,
     String? assignedEmployeeId,
     String? search,
-    int limit = 50,
-    int offset = 0,
+    int? limit,
+    int? offset,
   }) async {
     final callerIsAdmin = await roleService.isAdmin(session);
     if (!callerIsAdmin && !isOfficialOrAdmin(session)) {
@@ -396,8 +397,8 @@ class IssueEndpoint extends Endpoint {
         return expr;
       },
       orderByList: (t) => [t.createdAt.desc()],
-      limit: limit,
-      offset: offset,
+      limit: limit ?? 50,
+      offset: offset ?? 0,
     );
   }
 
@@ -529,7 +530,7 @@ class IssueEndpoint extends Endpoint {
       session,
       where: (t) => employeeEmail != null
           ? (t.assignedEmployeeId.equals(trimmedId) |
-              t.assignedEmployeeId.equals(employeeEmail))
+                t.assignedEmployeeId.equals(employeeEmail))
           : t.assignedEmployeeId.equals(trimmedId),
       orderByList: (t) => [t.createdAt.desc()],
     );
@@ -655,7 +656,7 @@ class IssueEndpoint extends Endpoint {
   Future<List<CivicNotification>> getNotifications(
     Session session, {
     bool? unreadOnly,
-    int limit = 50,
+    int? limit,
   }) async {
     final currentUserId = session.authenticated?.userIdentifier;
     if (currentUserId == null || currentUserId.trim().isEmpty) {
@@ -665,7 +666,7 @@ class IssueEndpoint extends Endpoint {
       session,
       currentUserId,
       unreadOnly: unreadOnly,
-      limit: limit,
+      limit: limit ?? 50,
     );
   }
 
@@ -876,11 +877,14 @@ class IssueEndpoint extends Endpoint {
       if (secret != null && secret.trim().isNotEmpty) return secret.trim();
     } catch (_) {}
     final envSecret = Platform.environment['UPLOAD_SECRET'];
-    if (envSecret != null && envSecret.trim().isNotEmpty) return envSecret.trim();
+    if (envSecret != null && envSecret.trim().isNotEmpty)
+      return envSecret.trim();
     return 'civicloop_default_upload_secret_key_2026';
   }
 
-  static (String cleanInput, String? token) extractTokenFromInput(String input) {
+  static (String cleanInput, String? token) extractTokenFromInput(
+    String input,
+  ) {
     final queryIdx = input.indexOf('?token=');
     if (queryIdx != -1) {
       final clean = input.substring(0, queryIdx);

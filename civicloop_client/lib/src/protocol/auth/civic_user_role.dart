@@ -46,7 +46,7 @@ abstract class CivicUserRole
       fullName: jsonSerialization['fullName'] as String?,
       role: jsonSerialization['role'] as String,
       department: jsonSerialization['department'] as String?,
-      isActive: jsonSerialization['isActive'] as bool,
+      isActive: _isc.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
       createdAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -56,6 +56,9 @@ abstract class CivicUserRole
     );
   }
 
+  /// The database id, set if the object has been inserted into the
+  /// database or if it has been fetched from the database. Otherwise,
+  /// the id will be null.
   int? id;
 
   String userId;
@@ -74,6 +77,8 @@ abstract class CivicUserRole
 
   DateTime updatedAt;
 
+  /// Returns a shallow copy of this [CivicUserRole]
+  /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CivicUserRole copyWith({
     int? id,
@@ -86,7 +91,6 @@ abstract class CivicUserRole
     DateTime? createdAt,
     DateTime? updatedAt,
   });
-
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -139,17 +143,20 @@ class _CivicUserRoleImpl extends CivicUserRole {
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super._(
-          id: id,
-          userId: userId,
-          email: email,
-          fullName: fullName,
-          role: role,
-          department: department,
-          isActive: isActive,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+         id: id,
+         userId: userId,
+         email: email,
+         fullName: fullName,
+         role: role,
+         department: department,
+         isActive: isActive,
+         createdAt: createdAt,
+         updatedAt: updatedAt,
+       );
 
+  /// Returns a shallow copy of this [CivicUserRole]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
   @override
   CivicUserRole copyWith({
     Object? id = _Undefined,

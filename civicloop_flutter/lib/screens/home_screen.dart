@@ -248,13 +248,17 @@ class _HomeScreenState extends State<HomeScreen> {
       chipColor = Colors.blue;
     }
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isNarrow = screenWidth < 400;
+
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 16,
+        titleSpacing: isNarrow ? 6 : 10,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: colors.primaryContainer,
                 borderRadius: BorderRadius.circular(8),
@@ -262,30 +266,40 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                 Icons.location_city_rounded,
                 color: colors.onPrimaryContainer,
-                size: 22,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'CivicLoop',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                Text(
-                  role == 'admin'
-                      ? 'Municipal Administration Suite'
-                      : (role == 'employee'
-                            ? 'Field Operations & Dispatch'
-                            : 'Urban Issue Triage & Management'),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 11,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'CivicLoop',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  Text(
+                    role == 'admin'
+                        ? 'Admin'
+                        : (role == 'employee'
+                              ? 'Field Ops'
+                              : (screenWidth < 360
+                                    ? 'Triage'
+                                    : (isNarrow
+                                          ? 'Issue Triage'
+                                          : 'Urban Issue Triage & Management'))),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -298,6 +312,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
                   tooltip: 'Notifications',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
                   onPressed: () {
                     showDialog<void>(
                       context: context,
@@ -334,27 +353,36 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: _refreshCurrentTab,
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: EdgeInsets.only(right: isNarrow ? 4 : 8),
             child: ActionChip(
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
               avatar: Icon(
                 isSignedIn ? Icons.account_circle : Icons.person_outline,
-                size: 18,
+                size: 16,
                 color: chipColor,
               ),
-              label: Text(
-                chipLabel.length > 20
-                    ? '${chipLabel.substring(0, 18)}...'
-                    : chipLabel,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: chipColor,
+              label: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: screenWidth < 360 ? 60 : (isNarrow ? 76 : 100),
+                ),
+                child: Text(
+                  chipLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: chipColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              visualDensity: VisualDensity.compact,
               onPressed: () => AuthDialog.show(context),
             ),
           ),

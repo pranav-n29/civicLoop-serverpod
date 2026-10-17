@@ -80,48 +80,48 @@ class CivicStatusChip extends StatelessWidget {
   });
 
   factory CivicStatusChip.success(String label) => CivicStatusChip(
-        label: label,
-        color: CivicColors.success,
-        icon: Icons.check_circle_outline_rounded,
-      );
+    label: label,
+    color: CivicColors.success,
+    icon: Icons.check_circle_outline_rounded,
+  );
 
   factory CivicStatusChip.warning(String label) => CivicStatusChip(
-        label: label,
-        color: CivicColors.warning,
-        icon: Icons.schedule_rounded,
-      );
+    label: label,
+    color: CivicColors.warning,
+    icon: Icons.schedule_rounded,
+  );
 
   factory CivicStatusChip.critical(String label) => CivicStatusChip(
-        label: label,
-        color: CivicColors.critical,
-        icon: Icons.priority_high_rounded,
-      );
+    label: label,
+    color: CivicColors.critical,
+    icon: Icons.priority_high_rounded,
+  );
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: .1),
-          borderRadius: BorderRadius.circular(CivicRadii.pill),
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .1),
+      borderRadius: BorderRadius.circular(CivicRadii.pill),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+        ],
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class CivicSeverityIndicator extends StatelessWidget {
@@ -135,8 +135,8 @@ class CivicSeverityIndicator extends StatelessWidget {
     final color = normalized == 'high'
         ? CivicColors.critical
         : normalized == 'medium'
-            ? CivicColors.warning
-            : CivicColors.success;
+        ? CivicColors.warning
+        : CivicColors.success;
     return CivicStatusChip(label: severity, color: color);
   }
 }
@@ -157,30 +157,30 @@ class CivicSectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
-                ],
-              ],
-            ),
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            if (subtitle != null) ...[
+              const SizedBox(height: 3),
+              Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ],
+        ),
+      ),
+      if (actionLabel != null)
+        TextButton(
+          onPressed: onAction,
+          child: Text(
+            actionLabel!,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
-          if (actionLabel != null)
-            TextButton(
-              onPressed: onAction,
-              child: Text(
-                actionLabel!,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-              ),
-            ),
-        ],
-      );
+        ),
+    ],
+  );
 }
 
 class CivicLoadingState extends StatelessWidget {
@@ -190,18 +190,18 @@ class CivicLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 14),
-              Text(message, style: Theme.of(context).textTheme.bodyMedium),
-            ],
-          ),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 14),
+          Text(message, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    ),
+  );
 }
 
 class CivicEmptyState extends StatelessWidget {
@@ -222,27 +222,27 @@ class CivicEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CivicCard(
-        child: Column(
-          children: [
-            Icon(icon, color: CivicColors.blue, size: 36),
-            const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 5),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            if (actionLabel != null) ...[
-              const SizedBox(height: 14),
-              CivicSecondaryButton(
-                label: actionLabel!,
-                onPressed: onAction,
-              ),
-            ],
-          ],
+    child: Column(
+      children: [
+        Icon(icon, color: CivicColors.blue, size: 36),
+        const SizedBox(height: 12),
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 5),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
-      );
+        if (actionLabel != null) ...[
+          const SizedBox(height: 14),
+          CivicSecondaryButton(
+            label: actionLabel!,
+            onPressed: onAction,
+          ),
+        ],
+      ],
+    ),
+  );
 }
 
 class CivicErrorState extends StatelessWidget {
@@ -257,21 +257,21 @@ class CivicErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CivicCard(
-        color: CivicColors.criticalTint,
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline_rounded, color: CivicColors.critical),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: CivicColors.navy)),
-            ),
-            if (onRetry != null)
-              IconButton(
-                onPressed: onRetry,
-                tooltip: 'Retry',
-                icon: const Icon(Icons.refresh_rounded),
-              ),
-          ],
+    color: CivicColors.criticalTint,
+    child: Row(
+      children: [
+        const Icon(Icons.error_outline_rounded, color: CivicColors.critical),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(message, style: const TextStyle(color: CivicColors.navy)),
         ),
-      );
+        if (onRetry != null)
+          IconButton(
+            onPressed: onRetry,
+            tooltip: 'Retry',
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+      ],
+    ),
+  );
 }

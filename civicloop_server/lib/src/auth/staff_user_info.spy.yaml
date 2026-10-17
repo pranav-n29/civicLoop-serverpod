@@ -1,0 +1,9 @@
+class: StaffUserInfo
+fields:
+  userId: String
+  email: String?
+  fullName: String?
+  role: String
+  department: String?
+  isActive: bool
+  activeAssignedCasesCount: int

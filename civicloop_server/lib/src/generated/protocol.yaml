@@ -19,8 +19,29 @@ issue:
   - getMyIssues:
   - getIssueById:
   - updateIssueStatus:
+  - getAdminIssues:
+  - getAdminStats:
+  - assignIssue:
+  - rejectIssue:
+  - getEmployeeAssignedIssues:
+  - startWork:
+  - addProgressNote:
+  - resolveIssue:
+  - confirmCitizenClosure:
+  - reopenIssue:
+  - getIssueAuditHistory:
+  - getNotifications:
+  - markNotificationRead:
+  - markAllNotificationsRead:
+  - getCurrentUserProfile:
+  - getStaffUsers:
+  - provisionStaff:
+  - setStaffActiveStatus:
+  - bootstrapFirstAdmin:
   - attachIssuePhoto:
   - getPhotoUploadDescription:
   - verifyAndAttachPhoto:
   - getIssuePhotoUrl:
   - getIssuePhoto:
+  - getCompletionPhotoUrl:
+  - getCompletionPhoto:

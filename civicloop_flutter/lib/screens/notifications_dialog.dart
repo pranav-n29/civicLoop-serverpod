@@ -134,12 +134,24 @@ class _NotificationsDialogState extends State<NotificationsDialog> {
     final colors = theme.colorScheme;
     final unreadCount = _notifications?.where((n) => !n.isRead).length ?? 0;
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screenWidth < 400 ? 16 : 24,
+        vertical: 24,
+      ),
       title: Row(
         children: [
           const Icon(Icons.notifications_active, color: Colors.blue),
           const SizedBox(width: 8),
-          const Text('Notifications'),
+          const Flexible(
+            child: Text(
+              'Notifications',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           if (unreadCount > 0) ...[
             const SizedBox(width: 8),
             Container(
@@ -158,107 +170,111 @@ class _NotificationsDialogState extends State<NotificationsDialog> {
               ),
             ),
           ],
-          const Spacer(),
-          if (unreadCount > 0)
-            TextButton(
-              onPressed: _markAllRead,
-              child: const Text('Mark all read'),
-            ),
         ],
       ),
-      content: SizedBox(
-        width: 480,
-        height: 420,
-        child: _isLoading && _notifications == null
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-            ? Center(
-                child: Text(
-                  'Failed to load notifications: $_errorMessage',
-                  style: TextStyle(color: colors.error),
-                ),
-              )
-            : (_notifications ?? []).isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.notifications_none,
-                      size: 52,
-                      color: colors.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'No notifications yet',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Updates on your assigned tasks or reported issues will appear here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 480,
+          maxHeight: screenHeight * 0.7,
+        ),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: _isLoading && _notifications == null
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+              ? Center(
+                  child: Text(
+                    'Failed to load notifications: $_errorMessage',
+                    style: TextStyle(color: colors.error),
+                  ),
+                )
+              : (_notifications ?? []).isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.notifications_none,
+                        size: 52,
                         color: colors.onSurfaceVariant,
-                        fontSize: 12,
                       ),
-                    ),
-                  ],
-                ),
-              )
-            : RefreshIndicator(
-                onRefresh: _loadNotifications,
-                child: ListView.separated(
-                  itemCount: _notifications!.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final notif = _notifications![index];
-                    final icon = _getNotificationIcon(notif.type);
-                    final color = _getNotificationColor(notif.type);
-
-                    return ListTile(
-                      dense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No notifications yet',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      leading: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: color.withAlpha(30),
-                        child: Icon(icon, color: color, size: 20),
-                      ),
-                      title: Text(
-                        notif.message,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Updates on your assigned tasks or reported issues will appear here.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: notif.isRead
-                              ? FontWeight.normal
-                              : FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        notif.createdAt.toLocal().toString().split('.')[0],
-                        style: TextStyle(
-                          fontSize: 11,
                           color: colors.onSurfaceVariant,
+                          fontSize: 12,
                         ),
                       ),
-                      trailing: !notif.isRead
-                          ? Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                              ),
-                            )
-                          : null,
-                      onTap: () => _openNotification(notif),
-                    );
-                  },
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadNotifications,
+                  child: ListView.separated(
+                    itemCount: _notifications!.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final notif = _notifications![index];
+                      final icon = _getNotificationIcon(notif.type);
+                      final color = _getNotificationColor(notif.type);
+
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: color.withAlpha(30),
+                          child: Icon(icon, color: color, size: 20),
+                        ),
+                        title: Text(
+                          notif.message,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: notif.isRead
+                                ? FontWeight.normal
+                                : FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          notif.createdAt.toLocal().toString().split('.')[0],
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: !notif.isRead
+                            ? Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                            : null,
+                        onTap: () => _openNotification(notif),
+                      );
+                    },
+                  ),
                 ),
-              ),
+        ),
       ),
       actions: [
+        if (unreadCount > 0)
+          TextButton(
+            onPressed: _markAllRead,
+            child: const Text('Mark all read'),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),

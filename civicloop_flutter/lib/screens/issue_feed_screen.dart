@@ -457,23 +457,26 @@ class _IssueFeedScreenState extends State<IssueFeedScreen> {
                                           : colors.onSurfaceVariant,
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      issue.userId != null
-                                          ? (isUserOwner
-                                                ? 'Reported by You'
-                                                : 'Reporter: ${issue.userId}')
-                                          : 'Citizen Report (Identity Protected)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: issue.userId != null
+                                    Expanded(
+                                      child: Text(
+                                        issue.userId != null
                                             ? (isUserOwner
-                                                  ? Colors.teal.shade800
-                                                  : colors.primary)
-                                            : colors.onSurfaceVariant,
+                                                  ? 'Reported by You'
+                                                  : 'Reporter: ${issue.userId}')
+                                            : 'Citizen Report (Identity Protected)',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: issue.userId != null
+                                              ? (isUserOwner
+                                                    ? Colors.teal.shade800
+                                                    : colors.primary)
+                                              : colors.onSurfaceVariant,
+                                        ),
                                       ),
                                     ),
-                                    const Spacer(),
+                                    const SizedBox(width: 4),
                                     const Icon(
                                       Icons.chevron_right,
                                       size: 18,

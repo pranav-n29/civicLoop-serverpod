@@ -240,21 +240,46 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                 style: TextStyle(color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FilledButton.icon(
-                    icon: const Icon(Icons.login),
-                    label: const Text('Sign In / Register'),
-                    onPressed: () => AuthDialog.show(context),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.vpn_key),
-                    label: const Text('Enter Claim Token'),
-                    onPressed: _lookupAnonymousReport,
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 420;
+                  if (isNarrow) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.login),
+                          label: const Text('Sign In / Register'),
+                          onPressed: () => AuthDialog.show(context),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.vpn_key),
+                          label: const Text('Enter Claim Token'),
+                          onPressed: _lookupAnonymousReport,
+                        ),
+                      ],
+                    );
+                  }
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 10,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      FilledButton.icon(
+                        icon: const Icon(Icons.login),
+                        label: const Text('Sign In / Register'),
+                        onPressed: () => AuthDialog.show(context),
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.vpn_key),
+                        label: const Text('Enter Claim Token'),
+                        onPressed: _lookupAnonymousReport,
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -384,16 +409,19 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          issue.category,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            issue.category,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const Spacer(),
-                        if (isClaimed)
+                        const SizedBox(width: 6),
+                        if (isClaimed) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -412,7 +440,8 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                               ),
                             ),
                           ),
-                        const SizedBox(width: 6),
+                          const SizedBox(width: 6),
+                        ],
                         Text(
                           issue.createdAt.toLocal().toString().split(' ')[0],
                           style: theme.textTheme.bodySmall?.copyWith(
