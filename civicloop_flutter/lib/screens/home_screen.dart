@@ -9,6 +9,7 @@ import 'employee_dashboard_screen.dart';
 import 'issue_feed_screen.dart';
 import 'my_issues_screen.dart';
 import 'notifications_dialog.dart';
+import 'notifications_screen.dart';
 
 /// Main navigation shell for CivicLoop with role-based dashboards.
 class HomeScreen extends StatefulWidget {
@@ -22,8 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   Key _feedKey = UniqueKey();
   Key _myIssuesKey = UniqueKey();
-  Key _adminKey = UniqueKey();
+  Key _adminOpsKey = UniqueKey();
+  Key _adminStaffKey = UniqueKey();
   Key _employeeKey = UniqueKey();
+  Key _notificationsKey = UniqueKey();
 
   StaffUserInfo? _userProfile;
   int _unreadNotificationsCount = 0;
@@ -58,7 +61,31 @@ class _HomeScreenState extends State<HomeScreen> {
             _unreadNotificationsCount = notifs.length;
           });
         }
-      } catch (_) {
+      } catch (e) {
+        // If server denies access (e.g. format mismatch, unprovisioned domain, deactivated)
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('access denied') ||
+            errStr.contains('deactivated') ||
+            errStr.contains('unauthorized') ||
+            errStr.contains('insufficientaccess')) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Authentication Notice: $e'),
+                backgroundColor: Colors.red.shade800,
+              ),
+            );
+          }
+          await client.auth.signOutDevice();
+          if (mounted) {
+            setState(() {
+              _userProfile = null;
+              _unreadNotificationsCount = 0;
+              _currentIndex = 0;
+            });
+          }
+          return;
+        }
         if (mounted) setState(() {});
       }
     } else {
@@ -66,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _userProfile = null;
           _unreadNotificationsCount = 0;
+          _currentIndex = 0;
         });
       }
     }
@@ -73,14 +101,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String get _currentRole {
     if (!client.auth.isAuthenticated) return 'anonymous';
-    if (_userProfile != null) return _userProfile!.role.toLowerCase();
+    // Strictly rely on backend verified role
+    if (_userProfile != null) {
+      final r = _userProfile!.role.toLowerCase();
+      // Municipal administrators access Admin Dashboard directly without approval
+      if (r == 'admin') return 'admin';
+      if (_userProfile!.approvalStatus == 'pending') {
+        return 'pending';
+      }
+      if (!_userProfile!.isActive &&
+          _userProfile!.approvalStatus != 'approved') {
+        return 'pending';
+      }
+      if (!_userProfile!.isActive) {
+        return 'deactivated';
+      }
+      if (r == 'employee') return 'employee';
+      return 'citizen';
+    }
     final scopes = client.auth.authInfo?.scopeNames ?? const <String>{};
     if (scopes.contains('admin') || scopes.contains('official')) return 'admin';
-    final uid = client.auth.authInfo?.authUserId.toString().toLowerCase() ?? '';
-    if (uid.endsWith('@official.civicloop') || uid == 'admin') return 'admin';
-    if (uid.startsWith('worker-') || uid.startsWith('employee-')) {
-      return 'employee';
-    }
     return 'citizen';
   }
 
@@ -94,10 +134,36 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _feedKey = UniqueKey();
       _myIssuesKey = UniqueKey();
-      _adminKey = UniqueKey();
+      _adminOpsKey = UniqueKey();
+      _adminStaffKey = UniqueKey();
       _employeeKey = UniqueKey();
+      _notificationsKey = UniqueKey();
     });
     _refreshRoleAndNotifications();
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -107,6 +173,212 @@ class _HomeScreenState extends State<HomeScreen> {
     final role = _currentRole;
     final isSignedIn = client.auth.isAuthenticated;
     final userIdentifier = client.auth.authInfo?.authUserId.toString();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isNarrow = screenWidth < 400;
+
+    if (role == 'pending') {
+      return Scaffold(
+        appBar: AppBar(
+          titleSpacing: isNarrow ? 6 : 10,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.location_city_rounded,
+                  color: colors.onPrimaryContainer,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Flexible(
+                child: Text(
+                  'CivicLoop',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Check Status',
+              onPressed: _refreshRoleAndNotifications,
+            ),
+            Padding(
+              padding: EdgeInsets.only(right: isNarrow ? 4 : 8),
+              child: ActionChip(
+                visualDensity: VisualDensity.compact,
+                avatar: const Icon(
+                  Icons.hourglass_top,
+                  size: 16,
+                  color: Colors.orange,
+                ),
+                label: const Text(
+                  'Pending',
+                  style: TextStyle(fontSize: 11, color: Colors.orange),
+                ),
+                onPressed: () => AuthDialog.show(context),
+              ),
+            ),
+          ],
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.pending_actions,
+                          size: 48,
+                          color: Colors.amber.shade800,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Account Pending Approval',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your Field Operations Worker account has been registered and is pending administrator approval before you can access field tasks.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.amber.shade900,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: colors.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Account Details',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Divider(height: 16),
+                          _buildDetailRow(
+                            'Email',
+                            _userProfile?.email ?? userIdentifier ?? '—',
+                          ),
+                          if (_userProfile?.employeeId != null)
+                            _buildDetailRow(
+                              'Employee ID',
+                              _userProfile!.employeeId!,
+                            ),
+                          _buildDetailRow(
+                            'Requested Role',
+                            _userProfile?.role == 'admin'
+                                ? 'Municipal Administrator'
+                                : 'Field Operations Worker',
+                          ),
+                          _buildDetailRow(
+                            'Status',
+                            'Pending Administrative Review',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Check Approval Status'),
+                    onPressed: _refreshRoleAndNotifications,
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign Out'),
+                    onPressed: () async {
+                      await client.auth.signOutDevice();
+                      _refreshRoleAndNotifications();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (role == 'deactivated') {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('CivicLoop'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.block, size: 48, color: colors.error),
+                const SizedBox(height: 12),
+                Text(
+                  'Account Deactivated',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.error,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Your account has been deactivated by a municipal administrator. Please contact IT support if you believe this is in error.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sign Out'),
+                  onPressed: () async {
+                    await client.auth.signOutDevice();
+                    _refreshRoleAndNotifications();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     // Configure role-specific tabs and views
     final List<Widget> tabViews;
@@ -114,46 +386,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (role == 'admin') {
       tabViews = [
-        AdminDashboardScreen(key: _adminKey),
-        IssueFeedScreen(
-          key: _feedKey,
-          onNavigateToCreate: () => _onTabSelected(3),
-        ),
-        MyIssuesScreen(
-          key: _myIssuesKey,
-          onNavigateToCreate: () => _onTabSelected(3),
-        ),
-        CreateIssueScreen(
-          onIssueCreated: () {
-            setState(() {
-              _adminKey = UniqueKey();
-              _feedKey = UniqueKey();
-              _myIssuesKey = UniqueKey();
-              _currentIndex = 0;
-            });
-          },
+        AdminDashboardScreen(key: _adminOpsKey, fixedTab: 0),
+        AdminDashboardScreen(key: _adminStaffKey, fixedTab: 1),
+        NotificationsScreen(
+          key: _notificationsKey,
+          onNotificationsUpdated: _refreshRoleAndNotifications,
         ),
       ];
       destinations = const [
         NavigationDestination(
-          icon: Icon(Icons.admin_panel_settings_outlined),
-          selectedIcon: Icon(Icons.admin_panel_settings),
-          label: 'Admin Center',
+          icon: Icon(Icons.list_alt_outlined),
+          selectedIcon: Icon(Icons.list_alt),
+          label: 'Case Operations',
         ),
         NavigationDestination(
-          icon: Icon(Icons.dynamic_feed_outlined),
-          selectedIcon: Icon(Icons.dynamic_feed_rounded),
-          label: 'Public Feed',
+          icon: Icon(Icons.people_outline),
+          selectedIcon: Icon(Icons.people),
+          label: 'Staff & Workloads',
         ),
         NavigationDestination(
-          icon: Icon(Icons.assignment_ind_outlined),
-          selectedIcon: Icon(Icons.assignment_ind_rounded),
-          label: 'My Reports',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.add_circle_outline_rounded),
-          selectedIcon: Icon(Icons.add_circle_rounded),
-          label: 'Report Issue',
+          icon: Icon(Icons.notifications_outlined),
+          selectedIcon: Icon(Icons.notifications),
+          label: 'Notifications',
         ),
       ];
     } else if (role == 'employee') {
@@ -161,16 +415,11 @@ class _HomeScreenState extends State<HomeScreen> {
         EmployeeDashboardScreen(key: _employeeKey),
         IssueFeedScreen(
           key: _feedKey,
-          onNavigateToCreate: () => _onTabSelected(2),
+          onNavigateToCreate: null,
         ),
-        CreateIssueScreen(
-          onIssueCreated: () {
-            setState(() {
-              _employeeKey = UniqueKey();
-              _feedKey = UniqueKey();
-              _currentIndex = 0;
-            });
-          },
+        NotificationsScreen(
+          key: _notificationsKey,
+          onNotificationsUpdated: _refreshRoleAndNotifications,
         ),
       ];
       destinations = const [
@@ -185,9 +434,9 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Public Feed',
         ),
         NavigationDestination(
-          icon: Icon(Icons.add_circle_outline_rounded),
-          selectedIcon: Icon(Icons.add_circle_rounded),
-          label: 'Report Issue',
+          icon: Icon(Icons.notifications_outlined),
+          selectedIcon: Icon(Icons.notifications),
+          label: 'Notifications',
         ),
       ];
     } else {
@@ -230,7 +479,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
     }
 
-    final safeIndex = _currentIndex < tabViews.length ? _currentIndex : 0;
+    final safeIndex = (_currentIndex >= 0 && _currentIndex < tabViews.length)
+        ? _currentIndex
+        : 0;
 
     String chipLabel;
     Color chipColor;
@@ -247,9 +498,6 @@ class _HomeScreenState extends State<HomeScreen> {
       chipLabel = 'Citizen: ${userIdentifier ?? ""}';
       chipColor = Colors.blue;
     }
-
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isNarrow = screenWidth < 400;
 
     return Scaffold(
       appBar: AppBar(
@@ -288,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? 'Field Ops'
                               : (screenWidth < 360
                                     ? 'Triage'
-                                    : (isNarrow
+                                    : (screenWidth < 600
                                           ? 'Issue Triage'
                                           : 'Urban Issue Triage & Management'))),
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -370,7 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               label: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: screenWidth < 360 ? 60 : (isNarrow ? 76 : 100),
+                  maxWidth: screenWidth < 360
+                      ? 56
+                      : (screenWidth < 420 ? 72 : 100),
                 ),
                 child: Text(
                   chipLabel,

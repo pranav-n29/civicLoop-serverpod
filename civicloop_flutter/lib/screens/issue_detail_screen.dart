@@ -749,26 +749,34 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                 child: Column(
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(Icons.badge, size: 20, color: Colors.indigo),
                         const SizedBox(width: 8),
-                        Text(
-                          'Assigned Field Technician: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colors.onSurfaceVariant,
-                            fontSize: 13,
-                          ),
-                        ),
-                        Text(
-                          _issue.assignedEmployeeName ??
-                              _issue.assignedEmployeeId ??
-                              'Unassigned',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _issue.assignedEmployeeId != null
-                                ? Colors.indigo
-                                : Colors.grey,
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              text: 'Assigned Field Technician: ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: colors.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text:
+                                      _issue.assignedEmployeeName ??
+                                      _issue.assignedEmployeeId ??
+                                      'Unassigned',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _issue.assignedEmployeeId != null
+                                        ? Colors.indigo
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -776,6 +784,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                     if (_issue.dueDate != null) ...[
                       const SizedBox(height: 8),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
                             Icons.calendar_today,
@@ -783,17 +792,28 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                             color: Colors.grey,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Target Completion Date: ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: colors.onSurfaceVariant,
-                              fontSize: 13,
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Target Completion Date: ',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.onSurfaceVariant,
+                                  fontSize: 13,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: _issue.dueDate!
+                                        .toLocal()
+                                        .toString()
+                                        .split(' ')[0],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Text(
-                            _issue.dueDate!.toLocal().toString().split(' ')[0],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -816,9 +836,12 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                   children: [
                     const Icon(Icons.location_on_outlined, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      'GPS: Lat ${_issue.latitude?.toStringAsFixed(4) ?? "-"}, Long ${_issue.longitude?.toStringAsFixed(4) ?? "-"}',
-                      style: theme.textTheme.bodyMedium,
+                    Expanded(
+                      child: Text(
+                        'GPS: Lat ${_issue.latitude?.toStringAsFixed(4) ?? "-"}, Long ${_issue.longitude?.toStringAsFixed(4) ?? "-"}',
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -844,11 +867,13 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                       children: [
                         Icon(Icons.cancel, color: Colors.red.shade900),
                         const SizedBox(width: 8),
-                        Text(
-                          'Case Rejected by Municipality',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red.shade900,
+                        Expanded(
+                          child: Text(
+                            'Case Rejected by Municipality',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade900,
+                            ),
                           ),
                         ),
                       ],
@@ -881,11 +906,13 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                       children: [
                         Icon(Icons.replay, color: Colors.deepOrange.shade900),
                         const SizedBox(width: 8),
-                        Text(
-                          'Case Reopened by Citizen',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepOrange.shade900,
+                        Expanded(
+                          child: Text(
+                            'Case Reopened by Citizen',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepOrange.shade900,
+                            ),
                           ),
                         ),
                       ],
@@ -924,11 +951,13 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                             color: Colors.blue.shade800,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Field Crew Progress Notes',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade900,
+                          Expanded(
+                            child: Text(
+                              'Field Crew Progress Notes',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade900,
+                              ),
                             ),
                           ),
                         ],
@@ -1005,9 +1034,11 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                           color: colors.onSurfaceVariant,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          'No initial photo attached to report.',
-                          style: TextStyle(color: colors.onSurfaceVariant),
+                        Expanded(
+                          child: Text(
+                            'No initial photo attached to report.',
+                            style: TextStyle(color: colors.onSurfaceVariant),
+                          ),
                         ),
                       ],
                     ),
@@ -1060,12 +1091,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         children: [
                           Icon(Icons.verified, color: Colors.green.shade800),
                           const SizedBox(width: 8),
-                          Text(
-                            'Resolution Evidence & Work Summary',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade900,
+                          Expanded(
+                            child: Text(
+                              'Resolution Evidence & Work Summary',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade900,
+                              ),
                             ),
                           ),
                         ],
@@ -1143,12 +1176,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                       children: [
                         Icon(Icons.rate_review, color: colors.primary),
                         const SizedBox(width: 8),
-                        Text(
-                          'Citizen Verification Required',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.primary,
+                        Expanded(
+                          child: Text(
+                            'Citizen Verification Required',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -1159,33 +1194,67 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                       style: TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.deepOrange.shade800,
-                              side: BorderSide(
-                                color: Colors.deepOrange.shade800,
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 420;
+                        if (isNarrow) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.deepOrange.shade800,
+                                  side: BorderSide(
+                                    color: Colors.deepOrange.shade800,
+                                  ),
+                                  minimumSize: const Size.fromHeight(44),
+                                ),
+                                icon: const Icon(Icons.replay),
+                                label: const Text('Dispute & Reopen'),
+                                onPressed: _disputeAndReopen,
+                              ),
+                              const SizedBox(height: 10),
+                              FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.green.shade700,
+                                  minimumSize: const Size.fromHeight(44),
+                                ),
+                                icon: const Icon(Icons.check_circle),
+                                label: const Text('Confirm Fixed (Close)'),
+                                onPressed: _confirmCitizenClosure,
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.deepOrange.shade800,
+                                  side: BorderSide(
+                                    color: Colors.deepOrange.shade800,
+                                  ),
+                                ),
+                                icon: const Icon(Icons.replay),
+                                label: const Text('Dispute & Reopen'),
+                                onPressed: _disputeAndReopen,
                               ),
                             ),
-                            icon: const Icon(Icons.replay),
-                            label: const Text('Dispute & Reopen'),
-                            onPressed: _disputeAndReopen,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Colors.green.shade700,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.green.shade700,
+                                ),
+                                icon: const Icon(Icons.check_circle),
+                                label: const Text('Confirm Fixed (Close)'),
+                                onPressed: _confirmCitizenClosure,
+                              ),
                             ),
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Confirm Fixed (Close)'),
-                            onPressed: _confirmCitizenClosure,
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -1203,24 +1272,62 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.teal.shade300),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.engineering, color: Colors.teal),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'You are assigned to this case. Ready to submit completion evidence?',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.teal.shade700,
-                      ),
-                      onPressed: _handleEmployeeResolve,
-                      child: const Text('Resolve Case'),
-                    ),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 400;
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.engineering, color: Colors.teal),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'You are assigned to this case. Ready to submit completion evidence?',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              minimumSize: const Size.fromHeight(42),
+                            ),
+                            icon: const Icon(
+                              Icons.check_circle_outline,
+                              size: 18,
+                            ),
+                            onPressed: _handleEmployeeResolve,
+                            label: const Text('Resolve Case'),
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        const Icon(Icons.engineering, color: Colors.teal),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'You are assigned to this case. Ready to submit completion evidence?',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.teal.shade700,
+                          ),
+                          onPressed: _handleEmployeeResolve,
+                          child: const Text('Resolve Case'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
@@ -1307,26 +1414,34 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
+                                Wrap(
+                                  alignment: WrapAlignment.spaceBetween,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 6,
+                                  runSpacing: 2,
                                   children: [
-                                    Text(
-                                      item.action.replaceAll('_', ' '),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                    Text.rich(
+                                      TextSpan(
+                                        text: item.action.replaceAll('_', ' '),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                        children: [
+                                          if (item.previousStatus != null &&
+                                              item.newStatus != null)
+                                            TextSpan(
+                                              text:
+                                                  ' (${item.previousStatus} → ${item.newStatus})',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.normal,
+                                                color: colors.onSurfaceVariant,
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
-                                    if (item.previousStatus != null &&
-                                        item.newStatus != null) ...[
-                                      Text(
-                                        ' (${item.previousStatus} → ${item.newStatus})',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: colors.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                    const Spacer(),
                                     Text(
                                       item.timestamp.toLocal().toString().split(
                                         '.',

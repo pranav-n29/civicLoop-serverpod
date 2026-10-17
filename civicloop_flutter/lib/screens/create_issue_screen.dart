@@ -43,6 +43,37 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
   // Submission State
   bool _isSubmitting = false;
 
+  StaffUserInfo? _currentUserProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    if (client.auth.isAuthenticated) {
+      try {
+        final profile = await client.issue.getCurrentUserProfile();
+        if (mounted) {
+          setState(() {
+            _currentUserProfile = profile;
+          });
+        }
+      } catch (_) {}
+    }
+  }
+
+  bool get _isStaffOrAdmin {
+    if (!client.auth.isAuthenticated) return false;
+    if (_currentUserProfile != null) {
+      final role = _currentUserProfile!.role.toLowerCase();
+      return role == 'admin' || role == 'employee';
+    }
+    final scopes = client.auth.authInfo?.scopeNames ?? const <String>{};
+    return scopes.contains('admin') || scopes.contains('official');
+  }
+
   static const List<String> _categories = [
     'Roads & Infrastructure',
     'Sanitation',
@@ -238,6 +269,18 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
   }
 
   Future<void> _submitIssue() async {
+    if (_isStaffOrAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Staff and administrators cannot submit citizen civic reports.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -496,6 +539,65 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
     final colors = theme.colorScheme;
     final userIdentifier = client.auth.authInfo?.authUserId.toString();
 
+    if (_isStaffOrAdmin) {
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Card(
+              elevation: 0,
+              color: colors.errorContainer.withAlpha(40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: colors.error.withAlpha(80)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 56,
+                      color: colors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Citizen Submission Restricted',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Civic issue reporting is reserved exclusively for citizens and public community members. Municipal staff and administrators must manage assigned issues or oversee operations from their respective task boards.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Return to Dashboard'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -600,22 +702,30 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        const Icon(
-                          Icons.psychology,
-                          color: Colors.deepPurple,
-                          size: 20,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.psychology,
+                              color: Colors.deepPurple,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Gemini AI Recommendations',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple.shade900,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Gemini AI Triage Recommendations',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple.shade900,
-                          ),
-                        ),
-                        const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -726,12 +836,19 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
             DropdownButtonFormField<String>(
               key: ValueKey(_selectedCategory),
               initialValue: _selectedCategory,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Category *',
                 border: OutlineInputBorder(),
               ),
               items: _categories.map((c) {
-                return DropdownMenuItem(value: c, child: Text(c));
+                return DropdownMenuItem(
+                  value: c,
+                  child: Text(
+                    c,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
               }).toList(),
               onChanged: (val) {
                 if (val != null) setState(() => _selectedCategory = val);
@@ -895,6 +1012,8 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             '${_selectedSamplePhoto!.fileName} (${PhotoUtils.formatBytes(_selectedSamplePhoto!.bytes.lengthInBytes)})',

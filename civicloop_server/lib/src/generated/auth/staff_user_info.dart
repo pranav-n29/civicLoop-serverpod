@@ -22,6 +22,8 @@ abstract class StaffUserInfo
     this.department,
     required this.isActive,
     required this.activeAssignedCasesCount,
+    this.employeeId,
+    this.approvalStatus,
   });
 
   factory StaffUserInfo({
@@ -32,6 +34,8 @@ abstract class StaffUserInfo
     String? department,
     required bool isActive,
     required int activeAssignedCasesCount,
+    String? employeeId,
+    String? approvalStatus,
   }) = _StaffUserInfoImpl;
 
   factory StaffUserInfo.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -44,6 +48,8 @@ abstract class StaffUserInfo
       isActive: _is.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
       activeAssignedCasesCount:
           jsonSerialization['activeAssignedCasesCount'] as int,
+      employeeId: jsonSerialization['employeeId'] as String?,
+      approvalStatus: jsonSerialization['approvalStatus'] as String?,
     );
   }
 
@@ -61,6 +67,10 @@ abstract class StaffUserInfo
 
   int activeAssignedCasesCount;
 
+  String? employeeId;
+
+  String? approvalStatus;
+
   /// Returns a shallow copy of this [StaffUserInfo]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -72,6 +82,8 @@ abstract class StaffUserInfo
     String? department,
     bool? isActive,
     int? activeAssignedCasesCount,
+    String? employeeId,
+    String? approvalStatus,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -84,6 +96,8 @@ abstract class StaffUserInfo
       if (department != null) 'department': department,
       'isActive': isActive,
       'activeAssignedCasesCount': activeAssignedCasesCount,
+      if (employeeId != null) 'employeeId': employeeId,
+      if (approvalStatus != null) 'approvalStatus': approvalStatus,
     };
   }
 
@@ -98,6 +112,8 @@ abstract class StaffUserInfo
       if (department != null) 'department': department,
       'isActive': isActive,
       'activeAssignedCasesCount': activeAssignedCasesCount,
+      if (employeeId != null) 'employeeId': employeeId,
+      if (approvalStatus != null) 'approvalStatus': approvalStatus,
     };
   }
 
@@ -118,6 +134,8 @@ class _StaffUserInfoImpl extends StaffUserInfo {
     String? department,
     required bool isActive,
     required int activeAssignedCasesCount,
+    String? employeeId,
+    String? approvalStatus,
   }) : super._(
          userId: userId,
          email: email,
@@ -126,6 +144,8 @@ class _StaffUserInfoImpl extends StaffUserInfo {
          department: department,
          isActive: isActive,
          activeAssignedCasesCount: activeAssignedCasesCount,
+         employeeId: employeeId,
+         approvalStatus: approvalStatus,
        );
 
   /// Returns a shallow copy of this [StaffUserInfo]
@@ -140,6 +160,8 @@ class _StaffUserInfoImpl extends StaffUserInfo {
     Object? department = _Undefined,
     bool? isActive,
     int? activeAssignedCasesCount,
+    Object? employeeId = _Undefined,
+    Object? approvalStatus = _Undefined,
   }) {
     return StaffUserInfo(
       userId: userId ?? this.userId,
@@ -150,6 +172,10 @@ class _StaffUserInfoImpl extends StaffUserInfo {
       isActive: isActive ?? this.isActive,
       activeAssignedCasesCount:
           activeAssignedCasesCount ?? this.activeAssignedCasesCount,
+      employeeId: employeeId is String? ? employeeId : this.employeeId,
+      approvalStatus: approvalStatus is String?
+          ? approvalStatus
+          : this.approvalStatus,
     );
   }
 }

@@ -22,6 +22,7 @@ class _AuthDialogState extends State<AuthDialog> {
   bool _isSignedIn = false;
   String? _userIdentifier;
   bool _showSignInWidget = false;
+  EmailFlowScreen _initialScreen = EmailFlowScreen.login;
   StaffUserInfo? _staffProfile;
   bool _isLoadingProfile = false;
 
@@ -68,27 +69,34 @@ class _AuthDialogState extends State<AuthDialog> {
   String get _roleDisplay {
     if (_staffProfile != null) {
       final r = _staffProfile!.role.toLowerCase();
-      if (r == 'admin') return 'Municipal Administrator';
-      if (r == 'employee') return 'Field Operations Worker';
+      final status = _staffProfile!.approvalStatus;
+      final isPending =
+          status == 'pending' ||
+          (!_staffProfile!.isActive && status != 'approved');
+      if (r == 'admin') {
+        return isPending
+            ? 'Admin (Pending Approval)'
+            : 'Municipal Administrator';
+      }
+      if (r == 'employee') {
+        final idStr = _staffProfile!.employeeId != null
+            ? ' (${_staffProfile!.employeeId})'
+            : '';
+        return isPending
+            ? 'Field Worker$idStr (Pending Approval)'
+            : 'Field Worker$idStr';
+      }
       return 'Verified Citizen';
     }
     final scopes = client.auth.authInfo?.scopeNames ?? const <String>{};
     if (scopes.contains('admin') || scopes.contains('official')) {
       return 'Municipal Administrator';
     }
-    if (_userIdentifier != null) {
-      final id = _userIdentifier!.toLowerCase();
-      if (id.endsWith('@official.civicloop') || id == 'admin') {
-        return 'Municipal Administrator';
-      }
-      if (id.startsWith('worker-') || id.startsWith('employee-')) {
-        return 'Field Operations Worker';
-      }
-    }
     return 'Verified Citizen';
   }
 
   Color get _roleColor {
+    if (_staffProfile?.approvalStatus == 'pending') return Colors.orange;
     final r = _roleDisplay.toLowerCase();
     if (r.contains('admin')) return Colors.indigo;
     if (r.contains('field')) return Colors.teal;
@@ -288,9 +296,24 @@ class _AuthDialogState extends State<AuthDialog> {
                     width: double.infinity,
                     child: FilledButton.icon(
                       icon: const Icon(Icons.login),
-                      label: const Text('Sign In with Email'),
+                      label: const Text('Sign In'),
                       onPressed: () {
                         setState(() {
+                          _initialScreen = EmailFlowScreen.login;
+                          _showSignInWidget = true;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.person_add_outlined),
+                      label: const Text('Register'),
+                      onPressed: () {
+                        setState(() {
+                          _initialScreen = EmailFlowScreen.startRegistration;
                           _showSignInWidget = true;
                         });
                       },
@@ -307,14 +330,16 @@ class _AuthDialogState extends State<AuthDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hackathon Demo Roles:',
+                          'Account Roles & Formats:',
                           style: theme.textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          '• Admin: Use an account with the official domain (@official.civicloop) or scope admin.\n• Field Worker: Accounts provisioned as employee.\n• Citizen: Any standard user email or anonymous report.',
+                          '• Citizen: Any valid personal email address (e.g. name@gmail.com). Browse issues, submit reports, and track personal cases.\n'
+                          '• Municipal Administrator: format name@civicloop.com. Full administrative oversight upon authorization.\n'
+                          '• Field Operations Worker: format employeeid@employeecivic.com. Field case assignment upon admin approval.',
                           style: TextStyle(fontSize: 12),
                         ),
                       ],
@@ -322,6 +347,7 @@ class _AuthDialogState extends State<AuthDialog> {
                   ),
                 ] else ...[
                   _ResponsiveEmailAuthWidget(
+                    initialScreen: _initialScreen,
                     onAuthenticated: () {
                       if (context.mounted) {
                         Navigator.of(context).pop();
@@ -377,10 +403,12 @@ class _AuthDialogState extends State<AuthDialog> {
 class _ResponsiveEmailAuthWidget extends StatefulWidget {
   final VoidCallback onAuthenticated;
   final ValueChanged<String>? onError;
+  final EmailFlowScreen initialScreen;
 
   const _ResponsiveEmailAuthWidget({
     required this.onAuthenticated,
     this.onError,
+    this.initialScreen = EmailFlowScreen.login,
   });
 
   @override
@@ -404,6 +432,13 @@ class _ResponsiveEmailAuthWidgetState
       },
     );
     _controller.addListener(_onControllerChanged);
+    if (widget.initialScreen != EmailFlowScreen.login) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _controller.navigateTo(widget.initialScreen);
+        }
+      });
+    }
   }
 
   void _onControllerChanged() {
@@ -415,6 +450,31 @@ class _ResponsiveEmailAuthWidgetState
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  String get _emailRoleType {
+    final text = _controller.emailController.text.trim().toLowerCase();
+    final parts = text.split('@');
+    if (parts.length != 2 || parts[1].isEmpty) return '';
+    final domain = parts[1];
+    if (domain == 'civicloop.com' || domain == 'official.civicloop') {
+      return 'admin';
+    }
+    if (domain == 'employeecivic.com' ||
+        domain == 'civicloop.local' ||
+        domain == 'city.gov') {
+      return 'employee';
+    }
+    return 'citizen';
+  }
+
+  String _formatErrorMessage(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('invalidcredentials') ||
+        lower.contains('invalid credentials')) {
+      return 'Invalid email or password. Please verify your credentials and try again.';
+    }
+    return raw;
   }
 
   @override
@@ -444,7 +504,7 @@ class _ResponsiveEmailAuthWidgetState
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _controller.errorMessage!,
+                    _formatErrorMessage(_controller.errorMessage!),
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.onErrorContainer,
@@ -487,17 +547,45 @@ class _ResponsiveEmailAuthWidgetState
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Sign In',
+          'Account Sign In',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Enter your email and password to access your account.',
+          'Citizens, administrators, and field workers sign in with their authorized email and password.',
           style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Allowed account formats:',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '• Citizens: Any valid personal email\n'
+                '• Admins: name@civicloop.com\n'
+                '• Field Workers: employeeid@employeecivic.com',
+                style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         TextField(
           controller: _controller.emailController,
           keyboardType: TextInputType.emailAddress,
@@ -564,7 +652,10 @@ class _ResponsiveEmailAuthWidgetState
             TextButton(
               onPressed: () =>
                   _controller.navigateTo(EmailFlowScreen.startRegistration),
-              child: const Text('Sign up', style: TextStyle(fontSize: 13)),
+              child: const Text(
+                'Register',
+                style: TextStyle(fontSize: 13),
+              ),
             ),
           ],
         ),
@@ -573,25 +664,57 @@ class _ResponsiveEmailAuthWidgetState
   }
 
   Widget _buildStartRegistrationForm(ThemeData theme, ColorScheme colors) {
+    final roleType = _emailRoleType;
+    final emailText = _controller.emailController.text.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Create Account',
+          'Register',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Enter your email address to receive a verification code.',
+          'Enter your email address to create a CivicLoop account.',
           style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Registration Account Types:',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '• Citizen: Any valid personal email (Instant access)\n'
+                '• Municipal Admin: name@civicloop.com (Instant administrator access)\n'
+                '• Field Worker: employeeid@employeecivic.com (Requires admin approval)',
+                style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         TextField(
           controller: _controller.emailController,
           keyboardType: TextInputType.emailAddress,
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             labelText: 'Email',
             prefixIcon: const Icon(Icons.email_outlined, size: 20),
@@ -599,6 +722,64 @@ class _ResponsiveEmailAuthWidgetState
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
+        if (emailText.contains('@') && roleType.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: roleType == 'admin'
+                  ? Colors.indigo.shade50
+                  : roleType == 'employee'
+                  ? Colors.teal.shade50
+                  : Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: roleType == 'admin'
+                    ? Colors.indigo.shade200
+                    : roleType == 'employee'
+                    ? Colors.teal.shade200
+                    : Colors.blue.shade200,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  roleType == 'admin'
+                      ? Icons.admin_panel_settings
+                      : roleType == 'employee'
+                      ? Icons.engineering
+                      : Icons.person,
+                  size: 18,
+                  color: roleType == 'admin'
+                      ? Colors.indigo.shade800
+                      : roleType == 'employee'
+                      ? Colors.teal.shade800
+                      : Colors.blue.shade800,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    roleType == 'admin'
+                        ? 'Municipal Administrator account. Instant administrator access granted for verified @civicloop.com accounts.'
+                        : roleType == 'employee'
+                        ? 'Field Operations Worker account (ID: ${emailText.split("@").first}). Requires admin approval before receiving tasks.'
+                        : 'Standard Citizen account with immediate access to submit and track reports.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: roleType == 'admin'
+                          ? Colors.indigo.shade900
+                          : roleType == 'employee'
+                          ? Colors.teal.shade900
+                          : Colors.blue.shade900,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         FilledButton(
           onPressed: _controller.isLoading

@@ -7,3 +7,5 @@ fields:
   department: String?
   isActive: bool
   activeAssignedCasesCount: int
+  employeeId: String?
+  approvalStatus: String?

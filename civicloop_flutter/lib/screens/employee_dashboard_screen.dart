@@ -237,8 +237,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
             return AlertDialog(
               title: Text('Resolve Case #${issue.id}'),
               content: SingleChildScrollView(
-                child: SizedBox(
-                  width: 440,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,13 +419,19 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.engineering, color: Colors.teal),
-            SizedBox(width: 8),
-            Text(
-              'Field Worker Task Board',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            const Icon(Icons.engineering, color: Colors.teal),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                MediaQuery.sizeOf(context).width < 380
+                    ? 'Task Board'
+                    : 'Field Worker Task Board',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -455,23 +461,27 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Worker: ${currentUserId ?? "Active Field Technician"}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Assigned Field Tasks: ${_assignedIssues?.length ?? 0}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.onSurfaceVariant,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Worker: ${currentUserId ?? "Active Field Technician"}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      Text(
+                        'Assigned Field Tasks: ${_assignedIssues?.length ?? 0}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -606,8 +616,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Top Row: Status, Priority, Due Date
-                                Row(
+                                // Top Badges
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -628,7 +641,6 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
                                     if (issue.priority != null)
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -653,31 +665,45 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                           ),
                                         ),
                                       ),
-                                    const Spacer(),
                                     if (issue.dueDate != null)
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.event,
-                                            size: 14,
-                                            color: isOverdue
-                                                ? Colors.red
-                                                : Colors.grey,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isOverdue
+                                              ? Colors.red.shade50
+                                              : colors.surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Due: ${issue.dueDate!.toLocal().toString().split(' ')[0]}',
-                                            style: TextStyle(
-                                              fontSize: 11,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.event,
+                                              size: 14,
                                               color: isOverdue
-                                                  ? Colors.red.shade900
-                                                  : Colors.grey.shade700,
-                                              fontWeight: isOverdue
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                                  ? Colors.red
+                                                  : Colors.grey,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Due: ${issue.dueDate!.toLocal().toString().split(' ')[0]}',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: isOverdue
+                                                    ? Colors.red.shade900
+                                                    : Colors.grey.shade700,
+                                                fontWeight: isOverdue
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -742,8 +768,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                 ],
 
                                 // Action buttons
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  alignment: WrapAlignment.end,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     OutlinedButton(
                                       onPressed: () {
@@ -760,8 +789,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                       },
                                       child: const Text('Details'),
                                     ),
-                                    const SizedBox(width: 8),
-                                    if (issue.status == 'assigned') ...[
+                                    if (issue.status == 'assigned')
                                       FilledButton.icon(
                                         icon: const Icon(
                                           Icons.play_arrow,
@@ -770,9 +798,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                         label: const Text('Start Work'),
                                         onPressed: () =>
                                             _handleStartWork(issue),
-                                      ),
-                                    ] else if (issue.status ==
-                                        'in_progress') ...[
+                                      )
+                                    else if (issue.status == 'in_progress') ...[
                                       OutlinedButton.icon(
                                         icon: const Icon(
                                           Icons.note_add,
@@ -782,7 +809,6 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                                         onPressed: () =>
                                             _handleAddProgressNote(issue),
                                       ),
-                                      const SizedBox(width: 8),
                                       FilledButton.icon(
                                         style: FilledButton.styleFrom(
                                           backgroundColor:

@@ -742,5 +742,428 @@ void main() {
       expect(find.text('IN_PROGRESS'), findsOneWidget);
       expect(find.text('RESOLVED'), findsOneWidget);
     });
+
+    testWidgets(
+      'AdminDashboardScreen shows appropriate reject actions and prevents invalid rejections',
+      (tester) async {
+        fakeEndpointIssue.adminIssues = [
+          Issue(
+            id: 1,
+            title: 'Open Issue',
+            description: 'Needs initial triage',
+            category: 'Roads',
+            status: 'open',
+            createdAt: DateTime.now(),
+          ),
+          Issue(
+            id: 2,
+            title: 'Assigned Issue',
+            description: 'Assigned to field worker',
+            category: 'Sanitation',
+            status: 'assigned',
+            assignedEmployeeId: 'emp_1',
+            assignedEmployeeName: 'Technician Dave',
+            createdAt: DateTime.now(),
+          ),
+          Issue(
+            id: 3,
+            title: 'In Progress Issue',
+            description: 'Work is currently underway',
+            category: 'Water',
+            status: 'in_progress',
+            assignedEmployeeId: 'emp_1',
+            createdAt: DateTime.now(),
+          ),
+          Issue(
+            id: 4,
+            title: 'Resolved Issue',
+            description: 'Awaiting citizen verification',
+            category: 'Parks',
+            status: 'resolved',
+            createdAt: DateTime.now(),
+          ),
+          Issue(
+            id: 5,
+            title: 'Closed Issue',
+            description: 'Case completed and closed',
+            category: 'Other',
+            status: 'closed',
+            createdAt: DateTime.now(),
+          ),
+        ];
+
+        tester.view.physicalSize = const Size(1200, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: AdminDashboardScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        // 1. Open issue permits standard Reject
+        expect(find.text('Reject'), findsOneWidget);
+
+        // 2. Assigned issue shows explicit Reject Assigned Case button
+        expect(find.text('Reject Assigned Case'), findsOneWidget);
+
+        // 3. In Progress issue shows disabled Reject button
+        expect(find.text('Reject (In Progress)'), findsOneWidget);
+
+        // 4. Resolved issue shows disabled Reject button
+        expect(find.text('Reject (Resolved)'), findsOneWidget);
+
+        // 5. Closed issue shows disabled Reject button
+        expect(find.text('Reject (Closed)'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AdminDashboardScreen disables self-deactivation switch for administrator in Staff directory',
+      (tester) async {
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'admin_1',
+          email: 'admin@civicloop.com',
+          fullName: 'Municipal Administrator',
+          role: 'admin',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        fakeEndpointIssue.staffUsers = [
+          StaffUserInfo(
+            userId: 'admin_1',
+            email: 'admin@civicloop.com',
+            fullName: 'Municipal Administrator',
+            role: 'admin',
+            isActive: true,
+            activeAssignedCasesCount: 0,
+            approvalStatus: 'approved',
+          ),
+          StaffUserInfo(
+            userId: 'worker_2',
+            email: 'worker@employeecivic.com',
+            fullName: 'Field Worker Bob',
+            role: 'employee',
+            isActive: true,
+            activeAssignedCasesCount: 2,
+            approvalStatus: 'approved',
+          ),
+        ];
+
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: AdminDashboardScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        // Switch to Staff & Workloads tab
+        await tester.tap(find.text('Staff & Workloads'));
+        await tester.pumpAndSettle();
+
+        // Admin card shows "Self (Protected)"
+        expect(find.text('Self (Protected)'), findsOneWidget);
+
+        // Two switches should be rendered
+        final switches = find.byType(Switch);
+        expect(switches, findsNWidgets(2));
+
+        // The first switch (admin) has onChanged == null (disabled)
+        final adminSwitch = tester.widget<Switch>(switches.at(0));
+        expect(adminSwitch.onChanged, isNull);
+
+        // The second switch (employee) has onChanged != null (enabled)
+        final employeeSwitch = tester.widget<Switch>(switches.at(1));
+        expect(employeeSwitch.onChanged, isNotNull);
+      },
+    );
+  });
+
+  group('Role-Based Navigation and Access Control Tests', () {
+    testWidgets(
+      'Citizen navigation includes Report Issue, Issue Feed, and My Reports',
+      (tester) async {
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'citizen_1',
+          email: 'citizen@example.com',
+          fullName: 'Citizen Jane',
+          role: 'citizen',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'citizen-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000003',
+            ),
+            scopeNames: {},
+          ),
+        );
+
+        await tester.pumpWidget(const CivicLoopApp());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(NavigationBar), findsOneWidget);
+
+        // Citizen has 3 destinations
+        expect(find.text('Issue Feed'), findsOneWidget);
+        expect(find.text('My Reports'), findsOneWidget);
+        expect(find.text('Report Issue'), findsOneWidget);
+
+        // Tapping Report Issue displays the creation form
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Report Issue'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Submit Civic Issue Report'), findsOneWidget);
+        expect(find.textContaining('Issue Title & Category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Employee navigation includes Field Tasks, Public Feed, Notifications, and EXCLUDES Report Issue',
+      (tester) async {
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'emp_1',
+          email: 'worker@employeecivic.com',
+          employeeId: 'emp101',
+          fullName: 'Field Worker Bob',
+          role: 'employee',
+          isActive: true,
+          activeAssignedCasesCount: 1,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'worker-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000002',
+            ),
+            scopeNames: {},
+          ),
+        );
+
+        await tester.pumpWidget(const CivicLoopApp());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(NavigationBar), findsOneWidget);
+
+        // Employee has Field Tasks, Public Feed, Notifications
+        expect(find.text('Field Tasks'), findsOneWidget);
+        expect(find.text('Public Feed'), findsOneWidget);
+        expect(find.text('Notifications'), findsOneWidget);
+
+        // Employee must NEVER see Report Issue in navigation
+        expect(find.text('Report Issue'), findsNothing);
+
+        // Tapping Public Feed shows feed without any "Report an Issue" button
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Public Feed'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Report an Issue'), findsNothing);
+
+        // Tapping Notifications tab opens notification view
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Notifications'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('No notifications yet'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Administrator navigation includes Case Operations, Staff & Workloads, Notifications, and EXCLUDES Report Issue',
+      (tester) async {
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'admin_1',
+          email: 'admin@civicloop.com',
+          fullName: 'Municipal Administrator',
+          role: 'admin',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'admin-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000001',
+            ),
+            scopeNames: {'admin'},
+          ),
+        );
+
+        await tester.pumpWidget(const CivicLoopApp());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(NavigationBar), findsOneWidget);
+
+        // Administrator has Case Operations, Staff & Workloads, Notifications
+        expect(find.text('Case Operations'), findsOneWidget);
+        expect(find.text('Staff & Workloads'), findsOneWidget);
+        expect(find.text('Notifications'), findsOneWidget);
+
+        // Administrator must NEVER see Report Issue in navigation
+        expect(find.text('Report Issue'), findsNothing);
+
+        // Tapping Staff & Workloads tab shows staff directory
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Staff & Workloads'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Municipal Staff Directory'), findsOneWidget);
+
+        // Tapping Notifications shows notifications
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Notifications'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('No notifications yet'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Navigation safe index handles role transitions gracefully without index overflow',
+      (tester) async {
+        // Start as citizen (authenticated)
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'citizen_1',
+          email: 'citizen@example.com',
+          fullName: 'Citizen Jane',
+          role: 'citizen',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'citizen-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000003',
+            ),
+            scopeNames: {},
+          ),
+        );
+
+        await tester.pumpWidget(const CivicLoopApp());
+        await tester.pumpAndSettle();
+
+        // Citizen is on index 2 (Report Issue)
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Report Issue'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Submit Civic Issue Report'), findsOneWidget);
+
+        // Switch to admin
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'admin_1',
+          email: 'admin@civicloop.com',
+          fullName: 'Municipal Administrator',
+          role: 'admin',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'admin-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000001',
+            ),
+            scopeNames: {'admin'},
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Index resets safely without overflow
+        expect(find.text('Report Issue'), findsNothing);
+        expect(find.text('Case Operations'), findsOneWidget);
+        expect(find.text('Staff & Workloads'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'CreateIssueScreen directly blocks staff and administrator users from submitting reports',
+      (tester) async {
+        fakeEndpointIssue.currentUserProfile = StaffUserInfo(
+          userId: 'admin_1',
+          email: 'admin@civicloop.com',
+          fullName: 'Municipal Administrator',
+          role: 'admin',
+          isActive: true,
+          activeAssignedCasesCount: 0,
+          approvalStatus: 'approved',
+        );
+
+        await client.authSessionManager.updateSignedInUser(
+          AuthSuccess(
+            authStrategy: 'session',
+            token: 'admin-token',
+            authUserId: UuidValue.fromString(
+              '00000000-0000-0000-0000-000000000001',
+            ),
+            scopeNames: {'admin'},
+          ),
+        );
+
+        // Mount CreateIssueScreen directly
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: CreateIssueScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Displays restriction view
+        expect(find.text('Citizen Submission Restricted'), findsOneWidget);
+        expect(
+          find.textContaining(
+            'Civic issue reporting is reserved exclusively for citizens',
+          ),
+          findsOneWidget,
+        );
+        // Form submit button is not present
+        expect(find.text('Submit Civic Issue Report'), findsNothing);
+      },
+    );
   });
 }

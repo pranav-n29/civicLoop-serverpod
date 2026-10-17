@@ -73,6 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _neighborhood,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Neighborhood'),
                 items: const [
                   DropdownMenuItem(

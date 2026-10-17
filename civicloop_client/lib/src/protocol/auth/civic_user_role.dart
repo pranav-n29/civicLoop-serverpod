@@ -22,6 +22,8 @@ abstract class CivicUserRole
     required this.role,
     this.department,
     required this.isActive,
+    this.employeeId,
+    this.approvalStatus,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -34,6 +36,8 @@ abstract class CivicUserRole
     required String role,
     String? department,
     required bool isActive,
+    String? employeeId,
+    String? approvalStatus,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _CivicUserRoleImpl;
@@ -47,6 +51,8 @@ abstract class CivicUserRole
       role: jsonSerialization['role'] as String,
       department: jsonSerialization['department'] as String?,
       isActive: _isc.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
+      employeeId: jsonSerialization['employeeId'] as String?,
+      approvalStatus: jsonSerialization['approvalStatus'] as String?,
       createdAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -73,6 +79,10 @@ abstract class CivicUserRole
 
   bool isActive;
 
+  String? employeeId;
+
+  String? approvalStatus;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -88,6 +98,8 @@ abstract class CivicUserRole
     String? role,
     String? department,
     bool? isActive,
+    String? employeeId,
+    String? approvalStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -102,6 +114,8 @@ abstract class CivicUserRole
       'role': role,
       if (department != null) 'department': department,
       'isActive': isActive,
+      if (employeeId != null) 'employeeId': employeeId,
+      if (approvalStatus != null) 'approvalStatus': approvalStatus,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -118,6 +132,8 @@ abstract class CivicUserRole
       'role': role,
       if (department != null) 'department': department,
       'isActive': isActive,
+      if (employeeId != null) 'employeeId': employeeId,
+      if (approvalStatus != null) 'approvalStatus': approvalStatus,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -140,6 +156,8 @@ class _CivicUserRoleImpl extends CivicUserRole {
     required String role,
     String? department,
     required bool isActive,
+    String? employeeId,
+    String? approvalStatus,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super._(
@@ -150,6 +168,8 @@ class _CivicUserRoleImpl extends CivicUserRole {
          role: role,
          department: department,
          isActive: isActive,
+         employeeId: employeeId,
+         approvalStatus: approvalStatus,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -166,6 +186,8 @@ class _CivicUserRoleImpl extends CivicUserRole {
     String? role,
     Object? department = _Undefined,
     bool? isActive,
+    Object? employeeId = _Undefined,
+    Object? approvalStatus = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -177,6 +199,10 @@ class _CivicUserRoleImpl extends CivicUserRole {
       role: role ?? this.role,
       department: department is String? ? department : this.department,
       isActive: isActive ?? this.isActive,
+      employeeId: employeeId is String? ? employeeId : this.employeeId,
+      approvalStatus: approvalStatus is String?
+          ? approvalStatus
+          : this.approvalStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

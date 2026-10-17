@@ -215,6 +215,7 @@ class _AiAnalysisScreenState extends State<AiAnalysisScreen> {
             children: [
               DropdownButtonFormField<String>(
                 initialValue: category,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: const [
                   DropdownMenuItem(value: 'Roads', child: Text('Roads')),
@@ -237,6 +238,7 @@ class _AiAnalysisScreenState extends State<AiAnalysisScreen> {
               ),
               DropdownButtonFormField<String>(
                 initialValue: severity,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Severity'),
                 items: const [
                   DropdownMenuItem(value: 'Low', child: Text('Low')),

@@ -59,15 +59,44 @@ class EndpointAi extends _isc.EndpointRef {
       );
 }
 
-/// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
-/// are made available on the server and enable the corresponding sign-in widget
-/// on the client.
+/// Identity provider endpoint for unified email-based authentication.
+///
+/// Supports citizens, municipal administrators, and field workers through a unified
+/// registration and login flow:
+/// - Citizen registrations (standard email) receive immediate active 'citizen' role.
+/// - Administrator registrations (@civicloop.com):
+///   - Development Demo Policy: Every verified @civicloop.com account receives active
+///     'admin' role, approved status, and Scope.admin privileges without manual approval.
+///     WARNING: In production, auto-granting admin privileges based on email domain is insecure.
+/// - Field Worker registrations (@employeecivic.com) create a persistent employee record
+///   with pending approval status, extracted employeeId, and no active permissions until approved.
 /// {@category Endpoint}
 class EndpointEmailIdp extends _iaic.EndpointEmailIdpBase {
   EndpointEmailIdp(_isc.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'emailIdp';
+
+  @override
+  _ida.Future<_isc.UuidValue> startRegistration({required String email}) =>
+      caller.callServerEndpoint<_isc.UuidValue>(
+        'emailIdp',
+        'startRegistration',
+        {'email': email},
+      );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> finishRegistration({
+    required String registrationToken,
+    required String password,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'emailIdp',
+    'finishRegistration',
+    {
+      'registrationToken': registrationToken,
+      'password': password,
+    },
+  );
 
   /// Logs in the user and returns a new session.
   ///
@@ -91,24 +120,6 @@ class EndpointEmailIdp extends _iaic.EndpointEmailIdpBase {
     },
   );
 
-  /// Starts the registration for a new user account with an email-based login
-  /// associated to it.
-  ///
-  /// Upon successful completion of this method, an email will have been
-  /// sent to [email] with a verification link, which the user must open to
-  /// complete the registration.
-  ///
-  /// Always returns a account request ID, which can be used to complete the
-  /// registration. If the email is already registered, the returned ID will not
-  /// be valid.
-  @override
-  _ida.Future<_isc.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_isc.UuidValue>(
-        'emailIdp',
-        'startRegistration',
-        {'email': email},
-      );
-
   /// Verifies an account request code and returns a token
   /// that can be used to complete the account creation.
   ///
@@ -129,33 +140,6 @@ class EndpointEmailIdp extends _iaic.EndpointEmailIdpBase {
     {
       'accountRequestId': accountRequestId,
       'verificationCode': verificationCode,
-    },
-  );
-
-  /// Completes a new account registration, creating a new auth user with a
-  /// profile and attaching the given email account to it.
-  ///
-  /// Throws an [EmailAccountRequestException] in case of errors, with reason:
-  /// - [EmailAccountRequestExceptionReason.expired] if the account request has
-  ///   already expired.
-  /// - [EmailAccountRequestExceptionReason.policyViolation] if the password
-  ///   does not comply with the password policy.
-  /// - [EmailAccountRequestExceptionReason.invalid] if the [registrationToken]
-  ///   is invalid.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  ///
-  /// Returns a session for the newly created user.
-  @override
-  _ida.Future<_iacc.AuthSuccess> finishRegistration({
-    required String registrationToken,
-    required String password,
-  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
-    'emailIdp',
-    'finishRegistration',
-    {
-      'registrationToken': registrationToken,
-      'password': password,
     },
   );
 
@@ -605,6 +589,21 @@ class EndpointIssue extends _isc.EndpointRef {
     {
       'targetUserId': targetUserId,
       'isActive': isActive,
+    },
+  );
+
+  /// Admin approves a pending staff member.
+  _ida.Future<_io8za3h0.CivicUserRole> approveStaff(
+    String targetUserId, {
+    String? department,
+    String? employeeId,
+  }) => caller.callServerEndpoint<_io8za3h0.CivicUserRole>(
+    'issue',
+    'approveStaff',
+    {
+      'targetUserId': targetUserId,
+      'department': department,
+      'employeeId': employeeId,
     },
   );
 

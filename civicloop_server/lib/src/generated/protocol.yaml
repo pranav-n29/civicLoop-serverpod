@@ -1,10 +1,10 @@
 ai:
   - triageIssue:
 emailIdp:
-  - login:
   - startRegistration:
-  - verifyRegistrationCode:
   - finishRegistration:
+  - login:
+  - verifyRegistrationCode:
   - startPasswordReset:
   - verifyPasswordResetCode:
   - finishPasswordReset:
@@ -37,6 +37,7 @@ issue:
   - getStaffUsers:
   - provisionStaff:
   - setStaffActiveStatus:
+  - approveStaff:
   - bootstrapFirstAdmin:
   - attachIssuePhoto:
   - getPhotoUploadDescription:

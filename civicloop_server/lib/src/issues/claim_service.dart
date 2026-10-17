@@ -17,7 +17,9 @@ class ClaimService {
   (String token, String hash) generateClaimToken(int issueId) {
     final random = Random.secure();
     final values = List<int>.generate(32, (i) => random.nextInt(256));
-    final randomHex = values.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final randomHex = values
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
     final rawToken = 'clm_${issueId}_$randomHex';
     final tokenHash = sha256.convert(utf8.encode(rawToken)).toString();
     return (rawToken, tokenHash);

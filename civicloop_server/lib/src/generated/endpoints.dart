@@ -86,31 +86,6 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'emailIdp',
       endpoint: endpoints['emailIdp']!,
       methodConnectors: {
-        'login': _is.MethodConnector(
-          name: 'login',
-          params: {
-            'email': _is.ParameterDescription(
-              name: 'email',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-            'password': _is.ParameterDescription(
-              name: 'password',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint).login(
-                    session,
-                    email: params['email'],
-                    password: params['password'],
-                  ),
-        ),
         'startRegistration': _is.MethodConnector(
           name: 'startRegistration',
           params: {
@@ -128,31 +103,6 @@ class Endpoints extends _is.EndpointDispatch {
                   .startRegistration(
                     session,
                     email: params['email'],
-                  ),
-        ),
-        'verifyRegistrationCode': _is.MethodConnector(
-          name: 'verifyRegistrationCode',
-          params: {
-            'accountRequestId': _is.ParameterDescription(
-              name: 'accountRequestId',
-              type: _is.getType<_is.UuidValue>(),
-              nullable: false,
-            ),
-            'verificationCode': _is.ParameterDescription(
-              name: 'verificationCode',
-              type: _is.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _is.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
-                  .verifyRegistrationCode(
-                    session,
-                    accountRequestId: params['accountRequestId'],
-                    verificationCode: params['verificationCode'],
                   ),
         ),
         'finishRegistration': _is.MethodConnector(
@@ -178,6 +128,56 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     registrationToken: params['registrationToken'],
                     password: params['password'],
+                  ),
+        ),
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'email': _is.ParameterDescription(
+              name: 'email',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'password': _is.ParameterDescription(
+              name: 'password',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint).login(
+                    session,
+                    email: params['email'],
+                    password: params['password'],
+                  ),
+        ),
+        'verifyRegistrationCode': _is.MethodConnector(
+          name: 'verifyRegistrationCode',
+          params: {
+            'accountRequestId': _is.ParameterDescription(
+              name: 'accountRequestId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'verificationCode': _is.ParameterDescription(
+              name: 'verificationCode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .verifyRegistrationCode(
+                    session,
+                    accountRequestId: params['accountRequestId'],
+                    verificationCode: params['verificationCode'],
                   ),
         ),
         'startPasswordReset': _is.MethodConnector(
@@ -881,6 +881,37 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['targetUserId'],
                     params['isActive'],
+                  ),
+        ),
+        'approveStaff': _is.MethodConnector(
+          name: 'approveStaff',
+          params: {
+            'targetUserId': _is.ParameterDescription(
+              name: 'targetUserId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'department': _is.ParameterDescription(
+              name: 'department',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'employeeId': _is.ParameterDescription(
+              name: 'employeeId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['issue'] as _i2bx2j6j.IssueEndpoint).approveStaff(
+                    session,
+                    params['targetUserId'],
+                    department: params['department'],
+                    employeeId: params['employeeId'],
                   ),
         ),
         'bootstrapFirstAdmin': _is.MethodConnector(

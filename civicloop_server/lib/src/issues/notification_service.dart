@@ -57,8 +57,10 @@ class NotificationService {
     int notificationId,
     String recipientId,
   ) async {
-    final notification =
-        await CivicNotification.db.findById(session, notificationId);
+    final notification = await CivicNotification.db.findById(
+      session,
+      notificationId,
+    );
     if (notification == null ||
         notification.recipientId != recipientId.trim()) {
       return false;

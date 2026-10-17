@@ -22,11 +22,11 @@ class AuditService {
     String? actorRole,
     String? actorName,
   }) async {
-    final effectiveActorId = actorId ??
-        session.authenticated?.userIdentifier ??
-        'anonymous';
+    final effectiveActorId =
+        actorId ?? session.authenticated?.userIdentifier ?? 'anonymous';
 
-    final effectiveActorRole = actorRole ??
+    final effectiveActorRole =
+        actorRole ??
         (session.authenticated != null
             ? await roleService.getRole(session, effectiveActorId)
             : 'anonymous');

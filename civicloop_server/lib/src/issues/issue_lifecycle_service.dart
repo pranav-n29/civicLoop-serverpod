@@ -101,12 +101,57 @@ class IssueLifecycleService {
       );
     }
 
-    // Verify target employee exists and is active
-    final employeeRole = await CivicUserRole.db.findFirstRow(
+    // Verify target employee exists, is an employee, is approved, and is active
+    var employeeRole = await CivicUserRole.db.findFirstRow(
       session,
-      where: (t) => t.userId.equals(trimmedEmployee) | t.email.equals(trimmedEmployee),
+      where: (t) =>
+          t.userId.equals(trimmedEmployee) |
+          t.email.equals(trimmedEmployee) |
+          t.employeeId.equals(trimmedEmployee),
     );
-    if (employeeRole != null && !employeeRole.isActive) {
+    if (employeeRole == null) {
+      try {
+        final uuid = UuidValue.fromString(trimmedEmployee);
+        final emailAcc = await EmailAccount.db.findFirstRow(
+          session,
+          where: (t) => t.authUserId.equals(uuid),
+        );
+        if (emailAcc != null) {
+          employeeRole = await CivicUserRole.db.findFirstRow(
+            session,
+            where: (t) =>
+                t.email.equals(emailAcc.email) |
+                t.userId.equals(emailAcc.email),
+          );
+        }
+      } catch (_) {}
+    }
+
+    if (employeeRole == null) {
+      throw ArgumentError.value(
+        employeeUserId,
+        'employeeUserId',
+        'Target employee was not found in municipal staff directory.',
+      );
+    }
+
+    if (employeeRole.role.toLowerCase() != RoleService.roleEmployee) {
+      throw ArgumentError.value(
+        employeeUserId,
+        'employeeUserId',
+        'Only employees can be assigned to issues (target user has role "${employeeRole.role}").',
+      );
+    }
+
+    if (employeeRole.approvalStatus == RoleService.statusPending) {
+      throw ArgumentError.value(
+        employeeUserId,
+        'employeeUserId',
+        'Cannot assign case: Target employee account is pending approval.',
+      );
+    }
+
+    if (!employeeRole.isActive) {
       throw ArgumentError.value(
         employeeUserId,
         'employeeUserId',
@@ -114,14 +159,20 @@ class IssueLifecycleService {
       );
     }
 
-    final employeeName = employeeRole?.fullName ?? trimmedEmployee;
-    final effectiveDept = department?.trim() ?? employeeRole?.department ?? issue.department;
+    final targetUserId = employeeRole.userId;
+    final employeeName =
+        employeeRole.fullName ??
+        (employeeRole.employeeId != null
+            ? 'Field Worker (${employeeRole.employeeId})'
+            : targetUserId);
+    final effectiveDept =
+        department?.trim() ?? employeeRole.department ?? issue.department;
     final previousStatus = issue.status;
     final now = DateTime.now();
 
     final updated = issue.copyWith(
       status: statusAssigned,
-      assignedEmployeeId: trimmedEmployee,
+      assignedEmployeeId: targetUserId,
       assignedEmployeeName: employeeName,
       assignedAt: now,
       dueDate: dueDate ?? issue.dueDate,
@@ -137,17 +188,18 @@ class IssueLifecycleService {
       action: previousStatus == statusAssigned ? 'reassigned' : 'assigned',
       previousStatus: previousStatus,
       newStatus: statusAssigned,
-      notes: notes ?? 'Assigned to $employeeName ($trimmedEmployee).',
+      notes: notes ?? 'Assigned to $employeeName ($targetUserId).',
     );
 
     // Notify employee
     await notificationService.createNotification(
       session,
-      recipientId: trimmedEmployee,
+      recipientId: targetUserId,
       issueId: issueId,
       type: 'assignment',
       title: 'New Case Assigned (#$issueId)',
-      message: 'You were assigned to "${issue.title}". Department: ${effectiveDept ?? "General"}.',
+      message:
+          'You were assigned to "${issue.title}". Department: ${effectiveDept ?? "General"}.',
     );
 
     // Notify citizen if registered
@@ -266,8 +318,12 @@ class IssueLifecycleService {
       );
     }
 
-    final timestamp = DateTime.now().toIso8601String().substring(0, 16).replaceAll('T', ' ');
-    final appended = (issue.progressNotes != null && issue.progressNotes!.isNotEmpty)
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .substring(0, 16)
+        .replaceAll('T', ' ');
+    final appended =
+        (issue.progressNotes != null && issue.progressNotes!.isNotEmpty)
         ? '${issue.progressNotes}\n[$timestamp] $trimmed'
         : '[$timestamp] $trimmed';
 
@@ -347,7 +403,8 @@ class IssueLifecycleService {
         issueId: issueId,
         type: 'case_resolved',
         title: 'Report #${issue.id} Marked Resolved',
-        message: 'Work is completed on "${issue.title}". Please verify and confirm closure.',
+        message:
+            'Work is completed on "${issue.title}". Please verify and confirm closure.',
       );
     }
 
@@ -366,11 +423,16 @@ class IssueLifecycleService {
       throw ArgumentError.value(issueId, 'issueId', 'Issue not found.');
     }
 
-    final isOwner = verifyCitizenOwnership(session, issue, claimToken: claimToken);
+    final isOwner = verifyCitizenOwnership(
+      session,
+      issue,
+      claimToken: claimToken,
+    );
     if (!isOwner) {
       throw NotAuthorizedException(
         reason: AuthenticationFailureReason.insufficientAccess,
-        message: 'Only the citizen who reported this issue can confirm closure.',
+        message:
+            'Only the citizen who reported this issue can confirm closure.',
       );
     }
 
@@ -432,7 +494,11 @@ class IssueLifecycleService {
       throw ArgumentError.value(issueId, 'issueId', 'Issue not found.');
     }
 
-    final isOwner = verifyCitizenOwnership(session, issue, claimToken: claimToken);
+    final isOwner = verifyCitizenOwnership(
+      session,
+      issue,
+      claimToken: claimToken,
+    );
     if (!isOwner) {
       throw NotAuthorizedException(
         reason: AuthenticationFailureReason.insufficientAccess,
@@ -506,13 +572,36 @@ class IssueLifecycleService {
       throw ArgumentError.value(issueId, 'issueId', 'Issue not found.');
     }
 
-    if (issue.status != statusOpen && issue.status != statusReopened) {
-      throw StateError(
-        'Cannot reject case #${issue.id} from "${issue.status}" status (must be "open" or "reopened").',
+    if (issue.status == statusInProgress) {
+      throw ArgumentError(
+        'Cannot reject case #${issue.id}: Work is currently in progress. Complete, cancel, or reassign the task first.',
+      );
+    }
+    if (issue.status == statusResolved) {
+      throw ArgumentError(
+        'Cannot reject case #${issue.id}: Case has already been resolved and is awaiting citizen closure or dispute.',
+      );
+    }
+    if (issue.status == statusClosed) {
+      throw ArgumentError(
+        'Cannot reject case #${issue.id}: Case is closed and cannot be rejected.',
+      );
+    }
+    if (issue.status == statusRejected) {
+      throw ArgumentError(
+        'Cannot reject case #${issue.id}: Case has already been rejected.',
+      );
+    }
+    if (issue.status != statusOpen &&
+        issue.status != statusReopened &&
+        issue.status != statusAssigned) {
+      throw ArgumentError(
+        'Cannot reject case #${issue.id} from "${issue.status}" status (must be "open", "reopened", or "assigned").',
       );
     }
 
     final now = DateTime.now();
+    final previousStatus = issue.status;
     final updated = issue.copyWith(
       status: statusRejected,
       rejectionReason: trimmedReason,
@@ -520,14 +609,32 @@ class IssueLifecycleService {
     );
     final saved = await Issue.db.updateRow(session, updated);
 
+    final auditNotes = previousStatus == statusAssigned
+        ? 'Case rejected by administrator while assigned to ${issue.assignedEmployeeName ?? issue.assignedEmployeeId}. Reason: $trimmedReason'
+        : trimmedReason;
+
     await auditService.recordAudit(
       session,
       issueId: issueId,
       action: 'rejected_by_admin',
-      previousStatus: issue.status,
+      previousStatus: previousStatus,
       newStatus: statusRejected,
-      notes: trimmedReason,
+      notes: auditNotes,
     );
+
+    // If case was assigned, notify the assigned field worker
+    if (issue.assignedEmployeeId != null &&
+        issue.assignedEmployeeId!.trim().isNotEmpty) {
+      await notificationService.createNotification(
+        session,
+        recipientId: issue.assignedEmployeeId!.trim(),
+        issueId: issueId,
+        type: 'case_rejected',
+        title: 'Assigned Case #${issue.id} Rejected',
+        message:
+            'Case "${issue.title}" assigned to you was rejected by administrator: $trimmedReason',
+      );
+    }
 
     if (issue.userId != null && issue.userId!.isNotEmpty) {
       await notificationService.createNotification(

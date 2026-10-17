@@ -77,6 +77,25 @@ class IssueEndpoint extends Endpoint {
     }
 
     final authUserId = session.authenticated?.userIdentifier;
+
+    if (session.authenticated != null && authUserId != null) {
+      if (isOfficialOrAdmin(session)) {
+        throw NotAuthorizedException(
+          reason: AuthenticationFailureReason.insufficientAccess,
+          message:
+              'Only citizen users can submit civic issue reports. Staff and administrators are not permitted to submit citizen reports.',
+        );
+      }
+      final role = await roleService.getRole(session, authUserId);
+      if (role == RoleService.roleAdmin || role == RoleService.roleEmployee) {
+        throw NotAuthorizedException(
+          reason: AuthenticationFailureReason.insufficientAccess,
+          message:
+              'Only citizen users can submit civic issue reports. Staff and administrators are not permitted to submit citizen reports.',
+        );
+      }
+    }
+
     final now = DateTime.now();
 
     final newIssue = Issue(
@@ -515,23 +534,35 @@ class IssueEndpoint extends Endpoint {
 
     final trimmedId = currentUserId.trim();
     String? employeeEmail;
+    String? employeeId;
     try {
-      final uuid = UuidValue.fromString(trimmedId);
-      final emailAcc = await EmailAccount.db.findFirstRow(
-        session,
-        where: (t) => t.authUserId.equals(uuid),
-      );
-      if (emailAcc != null) {
-        employeeEmail = emailAcc.email.trim();
-      }
+      final roleRecord = await roleService.findRoleRecord(session, trimmedId);
+      employeeEmail = roleRecord?.email;
+      employeeId = roleRecord?.employeeId;
     } catch (_) {}
+    if (employeeEmail == null) {
+      try {
+        final uuid = UuidValue.fromString(trimmedId);
+        final emailAcc = await EmailAccount.db.findFirstRow(
+          session,
+          where: (t) => t.authUserId.equals(uuid),
+        );
+        if (emailAcc != null) {
+          employeeEmail = emailAcc.email.trim();
+        }
+      } catch (_) {}
+    }
 
     return await Issue.db.find(
       session,
-      where: (t) => employeeEmail != null
-          ? (t.assignedEmployeeId.equals(trimmedId) |
-                t.assignedEmployeeId.equals(employeeEmail))
-          : t.assignedEmployeeId.equals(trimmedId),
+      where: (t) =>
+          t.assignedEmployeeId.equals(trimmedId) |
+          (employeeEmail != null
+              ? t.assignedEmployeeId.equals(employeeEmail)
+              : t.id.equals(-1)) |
+          (employeeId != null
+              ? t.assignedEmployeeId.equals(employeeId)
+              : t.id.equals(-1)),
       orderByList: (t) => [t.createdAt.desc()],
     );
   }
@@ -739,6 +770,21 @@ class IssueEndpoint extends Endpoint {
     );
   }
 
+  /// Admin approves a pending staff member.
+  Future<CivicUserRole> approveStaff(
+    Session session,
+    String targetUserId, {
+    String? department,
+    String? employeeId,
+  }) async {
+    return await roleService.approveStaff(
+      session,
+      targetUserId,
+      department: department,
+      employeeId: employeeId,
+    );
+  }
+
   /// Bootstrap initial administrator account.
   Future<CivicUserRole> bootstrapFirstAdmin(
     Session session,
@@ -877,8 +923,9 @@ class IssueEndpoint extends Endpoint {
       if (secret != null && secret.trim().isNotEmpty) return secret.trim();
     } catch (_) {}
     final envSecret = Platform.environment['UPLOAD_SECRET'];
-    if (envSecret != null && envSecret.trim().isNotEmpty)
+    if (envSecret != null && envSecret.trim().isNotEmpty) {
       return envSecret.trim();
+    }
     return 'civicloop_default_upload_secret_key_2026';
   }
 

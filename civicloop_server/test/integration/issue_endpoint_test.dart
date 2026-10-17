@@ -429,6 +429,78 @@ void main() {
     );
 
     test(
+      'when calling createIssue as municipal administrator then throws NotAuthorizedException',
+      () async {
+        final adminSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'admin@civicloop.com',
+            {const Scope('admin')},
+          ),
+        );
+
+        final issueToCreate = Issue(
+          title: 'Admin civic report attempt',
+          description: 'Trying to report as administrator',
+          category: 'Roads',
+          status: 'open',
+          createdAt: DateTime.now(),
+        );
+
+        await expectLater(
+          () => endpoints.issue.createIssue(adminSession, issueToCreate),
+          throwsA(
+            anyOf(
+              isA<ServerpodInsufficientAccessException>(),
+              isA<NotAuthorizedException>(),
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      'when calling createIssue as employee/worker then throws NotAuthorizedException',
+      () async {
+        final empSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'emp-create-restricted',
+            {},
+          ),
+        );
+
+        final adminSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'admin@civicloop.com',
+            {const Scope('admin')},
+          ),
+        );
+        await endpoints.issue.provisionStaff(
+          adminSession,
+          'emp-create-restricted',
+          'employee',
+        );
+
+        final issueToCreate = Issue(
+          title: 'Worker civic report attempt',
+          description: 'Trying to report as field worker',
+          category: 'Sanitation',
+          status: 'open',
+          createdAt: DateTime.now(),
+        );
+
+        await expectLater(
+          () => endpoints.issue.createIssue(empSession, issueToCreate),
+          throwsA(
+            anyOf(
+              isA<ServerpodInsufficientAccessException>(),
+              isA<NotAuthorizedException>(),
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
       'when calling getMyIssues then returns only authenticated user issues and enforces isolation between users',
       () async {
         final userASession = sessionBuilder.copyWith(
@@ -1087,12 +1159,16 @@ void main() {
         // Verify notification was sent to worker-john
         final workerNotifs = await endpoints.issue.getNotifications(empSession);
         expect(
-          workerNotifs.any((n) => n.issueId == created.id! && n.type == 'assignment'),
+          workerNotifs.any(
+            (n) => n.issueId == created.id! && n.type == 'assignment',
+          ),
           isTrue,
         );
 
         // 4. Employee sees assigned issue
-        final empList = await endpoints.issue.getEmployeeAssignedIssues(empSession);
+        final empList = await endpoints.issue.getEmployeeAssignedIssues(
+          empSession,
+        );
         expect(empList.any((i) => i.id == created.id!), isTrue);
 
         // 5. Employee starts work
@@ -1112,7 +1188,16 @@ void main() {
         expect(withNote.progressNotes, contains('Pipe valve replaced'));
 
         // 7. Employee resolves with completion notes & dummy photo
-        final sampleBytes = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        final sampleBytes = Uint8List.fromList([
+          0x89,
+          0x50,
+          0x4E,
+          0x47,
+          0x0D,
+          0x0A,
+          0x1A,
+          0x0A,
+        ]);
         final byteData = ByteData.sublistView(sampleBytes);
         final resolved = await endpoints.issue.resolveIssue(
           empSession,
@@ -1126,9 +1211,13 @@ void main() {
         expect(resolved.completionPhotoPath, isNotNull);
 
         // Verify citizen got notification of resolution
-        final citizenNotifs = await endpoints.issue.getNotifications(citizenSession);
+        final citizenNotifs = await endpoints.issue.getNotifications(
+          citizenSession,
+        );
         expect(
-          citizenNotifs.any((n) => n.issueId == created.id! && n.type == 'case_resolved'),
+          citizenNotifs.any(
+            (n) => n.issueId == created.id! && n.type == 'case_resolved',
+          ),
           isTrue,
         );
 
@@ -1269,6 +1358,237 @@ void main() {
         expect(rejected.status, equals('rejected'));
         expect(rejected.rejectionReason, contains('jurisdiction'));
         expect(rejected.rejectedAt, isNotNull);
+      },
+    );
+
+    test(
+      'Rejection lifecycle: rejection from open, reopened, assigned, and invalid statuses',
+      () async {
+        final adminSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'admin@official.civicloop',
+            {const Scope('admin'), const Scope('official')},
+          ),
+        );
+        final citizenSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'citizen-lifecycle-reject',
+            {},
+          ),
+        );
+        final workerSession = sessionBuilder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            'worker-reject-flow',
+            {},
+          ),
+        );
+
+        // Provision active employee
+        await endpoints.issue.provisionStaff(
+          adminSession,
+          'worker-reject-flow',
+          'employee',
+          department: 'Public Works',
+          fullName: 'Field Worker Dave',
+          email: 'worker.dave@employeecivic.com',
+        );
+
+        // 1. Rejection from "open"
+        final openCase = await endpoints.issue.createIssue(
+          citizenSession,
+          Issue(
+            title: 'Spam report',
+            description: 'Advertisements on public bench',
+            category: 'Sanitation',
+            status: 'open',
+            createdAt: DateTime.now(),
+          ),
+        );
+        final rejectedOpen = await endpoints.issue.rejectIssue(
+          adminSession,
+          openCase.id!,
+          'Spam / commercial solicitation',
+        );
+        expect(rejectedOpen.status, equals('rejected'));
+        expect(
+          rejectedOpen.rejectionReason,
+          equals('Spam / commercial solicitation'),
+        );
+        expect(rejectedOpen.rejectedAt, isNotNull);
+
+        // 2. Rejection from "assigned" (explicit assigned case workflow)
+        final assignedCase = await endpoints.issue.createIssue(
+          citizenSession,
+          Issue(
+            title: 'Assigned case to be cancelled',
+            description: 'Duplicate water leak report',
+            category: 'Water',
+            status: 'open',
+            createdAt: DateTime.now(),
+          ),
+        );
+        final assigned = await endpoints.issue.assignIssue(
+          adminSession,
+          assignedCase.id!,
+          'worker-reject-flow',
+        );
+        expect(assigned.status, equals('assigned'));
+        expect(assigned.assignedEmployeeId, equals('worker-reject-flow'));
+
+        final rejectedAssigned = await endpoints.issue.rejectIssue(
+          adminSession,
+          assigned.id!,
+          'Duplicate utility report; already addressed by regional water board',
+        );
+        expect(rejectedAssigned.status, equals('rejected'));
+        expect(
+          rejectedAssigned.assignedEmployeeId,
+          equals('worker-reject-flow'),
+          reason: 'Assignment record must be preserved for audit history',
+        );
+        expect(rejectedAssigned.assignedEmployeeName, isNotNull);
+        expect(rejectedAssigned.rejectedAt, isNotNull);
+
+        // Verify audit log for assigned rejection
+        final auditLogs = await endpoints.issue.getIssueAuditHistory(
+          adminSession,
+          assigned.id!,
+        );
+        expect(
+          auditLogs.any(
+            (a) =>
+                a.action == 'rejected_by_admin' &&
+                a.previousStatus == 'assigned' &&
+                a.newStatus == 'rejected' &&
+                (a.notes?.contains('assigned to') ?? false),
+          ),
+          isTrue,
+        );
+
+        // 3. Rejection from "reopened"
+        final reopenedCase = await endpoints.issue.createIssue(
+          citizenSession,
+          Issue(
+            title: 'Pothole for dispute',
+            description: 'Road damage on Maple Street',
+            category: 'Roads',
+            status: 'open',
+            createdAt: DateTime.now(),
+          ),
+        );
+        await endpoints.issue.assignIssue(
+          adminSession,
+          reopenedCase.id!,
+          'worker-reject-flow',
+        );
+        await endpoints.issue.startWork(workerSession, reopenedCase.id!);
+        await endpoints.issue.resolveIssue(
+          workerSession,
+          reopenedCase.id!,
+          'Paved patch applied',
+        );
+        await endpoints.issue.reopenIssue(
+          citizenSession,
+          reopenedCase.id!,
+          'Patch has cracked again',
+        );
+        final rejectedReopened = await endpoints.issue.rejectIssue(
+          adminSession,
+          reopenedCase.id!,
+          'Private driveway outside city jurisdiction upon re-inspection',
+        );
+        expect(rejectedReopened.status, equals('rejected'));
+        expect(rejectedReopened.rejectionReason, contains('jurisdiction'));
+
+        // 4. Invalid transitions: in_progress, resolved, closed, rejected
+        // 4a. in_progress
+        final inProgressCase = await endpoints.issue.createIssue(
+          citizenSession,
+          Issue(
+            title: 'Active work case',
+            description: 'Streetlight outage',
+            category: 'Electrical',
+            status: 'open',
+            createdAt: DateTime.now(),
+          ),
+        );
+        await endpoints.issue.assignIssue(
+          adminSession,
+          inProgressCase.id!,
+          'worker-reject-flow',
+        );
+        await endpoints.issue.startWork(workerSession, inProgressCase.id!);
+        await expectLater(
+          () => endpoints.issue.rejectIssue(
+            adminSession,
+            inProgressCase.id!,
+            'Try rejecting active work',
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.message,
+              'message',
+              contains('Work is currently in progress'),
+            ),
+          ),
+        );
+
+        // 4b. resolved
+        await endpoints.issue.resolveIssue(
+          workerSession,
+          inProgressCase.id!,
+          'Bulb replaced',
+        );
+        await expectLater(
+          () => endpoints.issue.rejectIssue(
+            adminSession,
+            inProgressCase.id!,
+            'Try rejecting resolved case',
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.message,
+              'message',
+              contains('already been resolved'),
+            ),
+          ),
+        );
+
+        // 4c. closed
+        await endpoints.issue.confirmCitizenClosure(
+          citizenSession,
+          inProgressCase.id!,
+        );
+        await expectLater(
+          () => endpoints.issue.rejectIssue(
+            adminSession,
+            inProgressCase.id!,
+            'Try rejecting closed case',
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.message,
+              'message',
+              contains('Case is closed'),
+            ),
+          ),
+        );
+
+        // 4d. rejected
+        await expectLater(
+          () => endpoints.issue.rejectIssue(
+            adminSession,
+            rejectedOpen.id!,
+            'Try rejecting already rejected case',
+          ),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.message,
+              'message',
+              contains('already been rejected'),
+            ),
+          ),
+        );
       },
     );
 
@@ -1414,7 +1734,11 @@ void main() {
 
         // 5. emp-1 starts work & resolves
         await endpoints.issue.startWork(emp1Session, issue.id!);
-        await endpoints.issue.resolveIssue(emp1Session, issue.id!, 'Fixed wiring');
+        await endpoints.issue.resolveIssue(
+          emp1Session,
+          issue.id!,
+          'Fixed wiring',
+        );
 
         // 6. Employee cannot close case (only citizen reporter can close)
         await expectLater(
@@ -1452,7 +1776,7 @@ void main() {
         );
 
         final issue = await endpoints.issue.createIssue(
-          adminSession,
+          sessionBuilder,
           Issue(
             title: 'Notification test issue',
             description: 'Testing notification inbox',
@@ -1488,7 +1812,9 @@ void main() {
         expect(unreadAfter.any((n) => n.id == firstNotif.id), isFalse);
 
         // Mark all read
-        final count = await endpoints.issue.markAllNotificationsRead(notifUserSession);
+        final count = await endpoints.issue.markAllNotificationsRead(
+          notifUserSession,
+        );
         expect(count, greaterThanOrEqualTo(0));
       },
     );
@@ -1519,7 +1845,9 @@ void main() {
         );
 
         // Verify profile retrieval
-        final profile = await endpoints.issue.getCurrentUserProfile(staffSession);
+        final profile = await endpoints.issue.getCurrentUserProfile(
+          staffSession,
+        );
         expect(profile, isNotNull);
         expect(profile!.role, equals('employee'));
         expect(profile.department, equals('Parks & Recreation'));

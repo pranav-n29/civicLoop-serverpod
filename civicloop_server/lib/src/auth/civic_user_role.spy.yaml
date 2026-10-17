@@ -7,6 +7,8 @@ fields:
   role: String
   department: String?
   isActive: bool
+  employeeId: String?
+  approvalStatus: String?
   createdAt: DateTime
   updatedAt: DateTime
 indexes:

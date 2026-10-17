@@ -433,6 +433,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'bool',
         ),
         _isp.ColumnDefinition(
+          name: 'employeeId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'approvalStatus',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
           name: 'createdAt',
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
