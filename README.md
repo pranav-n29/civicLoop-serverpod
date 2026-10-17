@@ -135,7 +135,7 @@ civicLoop-serverpod/
 ## 🏗️ System Architecture
 
 CivicLoop separates the user interface, backend business rules, and persistent data.
-
+```
 +------------------------------------------------+
 |              Flutter Application              |
 |                                                |
@@ -173,7 +173,7 @@ CivicLoop separates the user interface, backend business rules, and persistent d
 |  Persistent Application|  |   AI-Assisted      |
 |         Data           |  |      Triage        |
 +------------------------+  +--------------------+
-
+```
 
 ## 🚀 Getting Started
 
